@@ -1,28 +1,26 @@
-export interface SalesItem {
-  id: string
-  title: string
-  description: string
-  status: 'active' | 'pending' | 'completed'
-  priority: 'high' | 'medium' | 'low'
+// 数据库Case数据结构
+export interface Case {
+  _id: string
+  customerName: string
+  intro: string
+  avatar: string
+  orderIndex: number
+  metaData: {
+    budget: string
+    decision_level: string
+    personality: string[]
+    points: string[]
+    background: string
+  }
   createdAt: string
-  updatedAt: string
-  // New properties for roadmap design
-  name: string
-  avatar?: string
-  difficulty: 'easy' | 'medium' | 'hard'
-  stars: number
-  maxStars: number
-  isCompleted: boolean
-  isLocked: boolean
-  customerType: string
 }
 
 export interface ListPageProps {
-  items: SalesItem[]
+  items: Case[]
   loading?: boolean
 }
 
 export interface DetailPageProps {
-  item: SalesItem
+  item: Case
   loading?: boolean
 }

@@ -30,8 +30,8 @@ import {
   FiMicOff,
   FiSend
 } from 'react-icons/fi'
-import { getSalesItem } from '@/lib/data'
-import { SalesItem } from '@/types'
+import { getCase } from '@/lib/data'
+import { Case } from '@/types'
 
 interface Message {
   id: number
@@ -56,7 +56,7 @@ interface CustomerProfile {
 export default function DetailPage() {
   const router = useRouter()
   const params = useParams()
-  const [item, setItem] = useState<SalesItem | null>(null)
+  const [item, setItem] = useState<Case | null>(null)
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
   
@@ -97,76 +97,18 @@ export default function DetailPage() {
   }
 
   // 扩展的客户档案数据
-  const getCustomerProfile = (item: SalesItem): CustomerProfile => {
-    const profiles: { [key: string]: Partial<CustomerProfile> } = {
-      '1': {
-        role: '采购经理',
-        company: '科技创新有限公司',
-        personality: ['友善', '开放', '注重关系'],
-        painPoints: ['供应商选择', '成本优化', '质量保证'],
-        budget: '10-30万',
-        decisionMaker: true,
-        background: '有3年采购经验，重视长期合作关系。喜欢详细了解产品特性，倾向于选择信誉良好的供应商。'
-      },
-      '2': {
-        role: '质量总监',
-        company: '精密制造有限公司',
-        personality: ['挑剔', '注重细节', '完美主义'],
-        painPoints: ['质量标准', '工艺改进', '成本控制'],
-        budget: '20-50万',
-        decisionMaker: true,
-        background: '有8年质量管理经验，对产品质量要求极高。习惯深入了解技术细节，需要充分的质量证明和案例。'
-      },
-      '3': {
-        role: '总经理',
-        company: '商业投资集团',
-        personality: ['谨慎', '理性', '战略思维'],
-        painPoints: ['投资回报', '风险控制', '战略规划'],
-        budget: '50-200万',
-        decisionMaker: true,
-        background: '15年商业经验，注重投资回报率和长期价值。决策谨慎，需要详细的商业价值分析和风险评估。'
-      },
-      '4': {
-        role: '运营经理',
-        company: '快速消费品公司',
-        personality: ['急躁', '效率导向', '结果导向'],
-        painPoints: ['效率提升', '时间管理', '成本压缩'],
-        budget: '15-40万',
-        decisionMaker: false,
-        background: '在快节奏环境中工作，时间就是金钱。喜欢快速决策，重视实际效果和立即可见的价值。'
-      },
-      '5': {
-        role: '技术总监',
-        company: '高科技研发中心',
-        personality: ['专业', '严谨', '技术导向'],
-        painPoints: ['技术集成', '性能优化', '创新需求'],
-        budget: '30-100万',
-        decisionMaker: true,
-        background: '博士学位，10年技术研发经验。重视技术指标和创新性，需要深入的技术交流和专业证明。'
-      },
-      '6': {
-        role: '采购总监',
-        company: '大型制造集团',
-        personality: ['苛刻', '强势', '成本敏感'],
-        painPoints: ['供应链优化', '成本降低', '风险管控'],
-        budget: '100-500万',
-        decisionMaker: true,
-        background: '20年采购管理经验，以严格和苛刻著称。对价格和服务要求极高，习惯强势谈判。'
-      }
-    }
-
-    const profile = profiles[item.id] || {}
+  const getCustomerProfile = (item: Case): CustomerProfile => {
     return {
-      id: item.id,
-      name: item.name,
+      id: item._id,
+      name: item.customerName,
       avatar: item.avatar || '',
-      role: profile.role || '客户',
-      company: profile.company || '某公司',
-      personality: profile.personality || ['专业'],
-      painPoints: profile.painPoints || ['业务需求'],
-      budget: profile.budget || '待定',
-      decisionMaker: profile.decisionMaker ?? true,
-      background: profile.background || '专业的商业客户，注重产品价值和服务质量。'
+      role: item.metaData.decision_level || '客户',
+      company: '某公司',
+      personality: item.metaData.personality || ['专业'],
+      painPoints: item.metaData.points || ['业务需求'],
+      budget: item.metaData.budget || '待定',
+      decisionMaker: item.metaData.decision_level?.includes('决策') || item.metaData.decision_level?.includes('总监') || item.metaData.decision_level?.includes('经理') || false,
+      background: item.metaData.background || '专业的商业客户，注重产品价值和服务质量。'
     }
   }
 
@@ -174,7 +116,7 @@ export default function DetailPage() {
   useEffect(() => {
     const loadItem = async () => {
       try {
-        const data = await getSalesItem(params.id as string)
+        const data = await getCase(params.id as string)
         setItem(data)
       } catch (error) {
         console.error('Failed to load item:', error)
