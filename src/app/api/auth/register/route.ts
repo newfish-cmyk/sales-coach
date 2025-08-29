@@ -41,23 +41,23 @@ export async function POST(request: NextRequest) {
       { message: 'User created successfully', user: userResponse },
       { status: 201 }
     )
-  } catch (error: any) {
+  } catch (error) {
     console.error('Registration error:', error)
     
-    if (error.code === 11000) {
+    if (error instanceof Error && 'code' in error && error.code === 11000) {
       return NextResponse.json(
         { error: 'User with this username already exists' },
         { status: 409 }
       )
     }
 
-    if (error.name === 'ValidationError') {
-      const validationErrors = Object.values(error.errors).map((err: any) => err.message)
-      return NextResponse.json(
-        { error: 'Validation failed', details: validationErrors },
-        { status: 400 }
-      )
-    }
+    // if (error instanceof Error && 'name' in error && error.name === 'ValidationError') {
+    //   const validationErrors = Object.values(error.errors).map((err: any) => err.message)
+    //   return NextResponse.json(
+    //     { error: 'Validation failed', details: validationErrors },
+    //     { status: 400 }
+    //   )
+    // }
 
     return NextResponse.json(
       { error: 'Internal server error' },

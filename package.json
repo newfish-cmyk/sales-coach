@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "type-check": "tsc --noEmit",
-    "init-data": "tsx scripts/initMockData.ts"
+    "init-data": "tsx scripts/initMockData.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@chakra-ui/icons": "^2.2.4",
@@ -34,6 +36,7 @@
     "dotenv": "^17.2.1",
     "eslint": "^9",
     "eslint-config-next": "15.5.2",
+    "prettier": "^3.4.1",
     "tailwindcss": "^4",
     "tsx": "^4.20.5",
     "typescript": "^5"

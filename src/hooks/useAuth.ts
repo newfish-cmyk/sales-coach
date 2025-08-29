@@ -13,34 +13,34 @@ export function useAuth() {
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
     loading: true,
-    error: null
+    error: null,
   })
 
   const checkAuth = async () => {
     try {
       setAuthState(prev => ({ ...prev, loading: true, error: null }))
-      
+
       const response = await fetch('/api/auth/session')
-      
+
       if (response.ok) {
         const data = await response.json()
         setAuthState({
           user: data.user,
           loading: false,
-          error: null
+          error: null,
         })
       } else {
         setAuthState({
           user: null,
           loading: false,
-          error: null
+          error: null,
         })
       }
-    } catch (error) {
+    } catch {
       setAuthState({
         user: null,
         loading: false,
-        error: 'Failed to check authentication'
+        error: 'Failed to check authentication',
       })
     }
   }
@@ -48,7 +48,7 @@ export function useAuth() {
   const login = async (username: string, password: string) => {
     try {
       setAuthState(prev => ({ ...prev, loading: true, error: null }))
-      
+
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
@@ -63,23 +63,23 @@ export function useAuth() {
         setAuthState({
           user: data.user,
           loading: false,
-          error: null
+          error: null,
         })
         return { success: true, user: data.user }
       } else {
         setAuthState(prev => ({
           ...prev,
           loading: false,
-          error: data.error
+          error: data.error,
         }))
         return { success: false, error: data.error }
       }
-    } catch (error) {
+    } catch {
       const errorMessage = 'Login failed'
       setAuthState(prev => ({
         ...prev,
         loading: false,
-        error: errorMessage
+        error: errorMessage,
       }))
       return { success: false, error: errorMessage }
     }
@@ -88,7 +88,7 @@ export function useAuth() {
   const register = async (username: string, password: string) => {
     try {
       setAuthState(prev => ({ ...prev, loading: true, error: null }))
-      
+
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
@@ -106,16 +106,16 @@ export function useAuth() {
         setAuthState(prev => ({
           ...prev,
           loading: false,
-          error: data.error
+          error: data.error,
         }))
         return { success: false, error: data.error }
       }
-    } catch (error) {
+    } catch {
       const errorMessage = 'Registration failed'
       setAuthState(prev => ({
         ...prev,
         loading: false,
-        error: errorMessage
+        error: errorMessage,
       }))
       return { success: false, error: errorMessage }
     }
@@ -134,7 +134,7 @@ export function useAuth() {
       setAuthState({
         user: null,
         loading: false,
-        error: null
+        error: null,
       })
     }
   }
@@ -150,6 +150,6 @@ export function useAuth() {
     login,
     register,
     logout,
-    checkAuth
+    checkAuth,
   }
 }

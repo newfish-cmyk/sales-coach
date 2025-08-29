@@ -25,7 +25,6 @@ import {
   FiMessageCircle, 
   FiClock, 
   FiTarget,
-  FiStar,
   FiMic,
   FiMicOff,
   FiSend
@@ -130,25 +129,6 @@ export default function DetailPage() {
     }
   }, [params.id])
 
-  const StarRating = ({ score }: { score: number }) => {
-    return (
-      <HStack gap={1}>
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Icon
-            key={star}
-            as={FiStar}
-            w={5}
-            h={5}
-            color={star <= score ? 'yellow.400' : 'gray.300'}
-            fill={star <= score ? 'yellow.400' : 'none'}
-          />
-        ))}
-        <Text ml={2} fontSize="sm" color="gray.600">
-          {score}/5
-        </Text>
-      </HStack>
-    )
-  }
 
   if (!mounted || loading) {
     return (

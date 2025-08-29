@@ -4,28 +4,22 @@ import Case from '@/models/Case'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
 
     await connectDB()
 
     const case_ = await Case.findById(id).select('-__v')
 
     if (!case_) {
-      return NextResponse.json(
-        { error: 'Case not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Case not found' }, { status: 404 })
     }
 
     return NextResponse.json({ case: case_ })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Get case error:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch case' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to fetch case' }, { status: 500 })
   }
 }

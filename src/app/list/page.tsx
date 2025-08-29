@@ -9,14 +9,12 @@ import {
   Heading,
   Text,
   Box,
-  Badge,
   Flex,
   Spinner,
   SimpleGrid,
   Icon,
   Button,
   Separator,
-  Portal
 } from '@chakra-ui/react'
 import { Popover } from '@chakra-ui/react'
 import { 
