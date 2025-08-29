@@ -16,7 +16,6 @@ import {
   Icon
 } from '@chakra-ui/react'
 import { 
-  FiMapPin, 
   FiAward, 
   FiStar, 
   FiLock, 

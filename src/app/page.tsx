@@ -269,7 +269,7 @@ export default function Home() {
                   ))}
                 </HStack>
                 <Text color="gray.600" mb={4} lineHeight={1.6}>
-                  "{testimonial.text}"
+                  &ldquo;{testimonial.text}&rdquo;
                 </Text>
                 <Box>
                   <Text fontWeight="semibold" color="gray.900">
