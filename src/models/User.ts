@@ -5,7 +5,6 @@ export interface IUser extends Document {
   username: string
   password: string
   createdAt: Date
-  updatedAt: Date
 }
 
 const UserSchema: Schema = new Schema(
@@ -23,9 +22,13 @@ const UserSchema: Schema = new Schema(
       required: [true, 'Password is required'],
       minlength: [6, 'Password must be at least 6 characters long'],
     },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
   },
   {
-    timestamps: true,
+    timestamps: false,
   }
 )
 
