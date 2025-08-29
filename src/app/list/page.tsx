@@ -21,6 +21,7 @@ import {
   FiLock, 
   FiCheckCircle,
   FiArrowDown,
+  FiUser,
 } from 'react-icons/fi'
 import { getSalesItems } from '@/lib/data'
 import { SalesItem } from '@/types'
@@ -114,6 +115,37 @@ export default function ListPage() {
 
   return (
     <Box bg="white">
+      {/* Header Bar */}
+      <Box bg="white" borderBottom="1px" borderColor="gray.200" py={4}>
+        <Container maxW="container.xl">
+          <HStack justify="space-between" align="center">
+            <Heading 
+              size="lg" 
+              color="gray.900"
+              cursor="pointer"
+              transition="all 0.2s"
+              _hover={{ color: "blue.600", transform: "scale(1.05)" }}
+              onClick={() => {
+                router.push('/')
+              }}
+            >
+              销售对练系统
+            </Heading>
+            <Box
+              w={10}
+              h={10}
+              bg="blue.600"
+              borderRadius="full"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <Icon as={FiUser} w={5} h={5} color="white" />
+            </Box>
+          </HStack>
+        </Container>
+      </Box>
+
       <Container maxW="container.xl" py={8}>
         {/* Header Section */}
         <VStack textAlign="center" mb={8} gap={4}>

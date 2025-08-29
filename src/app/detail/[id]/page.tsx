@@ -16,7 +16,8 @@ import {
   Grid,
   Spinner,
   Center,
-  Icon
+  Icon,
+  Textarea,
 } from '@chakra-ui/react'
 import { 
   FiArrowLeft, 
@@ -24,7 +25,10 @@ import {
   FiMessageCircle, 
   FiClock, 
   FiTarget,
-  FiStar
+  FiStar,
+  FiMic,
+  FiMicOff,
+  FiSend
 } from 'react-icons/fi'
 import { getSalesItem } from '@/lib/data'
 import { SalesItem } from '@/types'
@@ -55,11 +59,42 @@ export default function DetailPage() {
   const [item, setItem] = useState<SalesItem | null>(null)
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
-  const [currentScore] = useState(4)
+  
+  const [messages, setMessages] = useState<Message[]>([
+
+  ])
+  const [isRecording, setIsRecording] = useState(false)
+  const [inputText, setInputText] = useState("")
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // 对话处理函数
+  const handleStartRecording = () => {
+    setIsRecording(true)
+    console.log("开始录音")
+  }
+
+  const handleStopRecording = () => {
+    setIsRecording(false)
+    console.log("停止录音")
+  }
+
+  const handleSendMessage = () => {
+    if (!inputText.trim()) return
+
+    const newMessage: Message = {
+      id: messages.length + 1,
+      sender: "user",
+      content: inputText,
+      timestamp: new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }),
+    }
+
+    setMessages([...messages, newMessage])
+    setInputText("")
+    
+  }
 
   // 扩展的客户档案数据
   const getCustomerProfile = (item: SalesItem): CustomerProfile => {
@@ -135,37 +170,6 @@ export default function DetailPage() {
     }
   }
 
-  // 模拟对话数据
-  const getConversationHistory = (): Message[] => {
-    return [
-      {
-        id: 1,
-        sender: 'customer',
-        content: '你好，我想了解一下你们的产品和服务。',
-        timestamp: '09:30'
-      },
-      {
-        id: 2,
-        sender: 'user',
-        content: '您好！很高兴为您介绍我们的产品。请问您目前在业务方面遇到了什么挑战吗？',
-        timestamp: '09:32'
-      },
-      {
-        id: 3,
-        sender: 'customer',
-        content: '主要是想提升我们的运营效率，同时控制成本。听说你们有相关的解决方案？',
-        timestamp: '09:35'
-      },
-      {
-        id: 4,
-        sender: 'user',
-        content: '我完全理解您的关注点。我们的产品在效率提升和成本控制方面都有很好的表现。让我为您详细介绍一下...',
-        timestamp: '09:37'
-      }
-    ]
-  }
-
-  const [messages] = useState<Message[]>(getConversationHistory())
 
   useEffect(() => {
     const loadItem = async () => {
@@ -256,25 +260,19 @@ export default function DetailPage() {
                 _hover={{ color: 'blue.700', bg: 'blue.50' }}
                 onClick={() => router.push('/list')}
               >
-                <Icon as={FiArrowLeft} />返回路线图
+                <Icon as={FiArrowLeft} />返回
               </Button>
               <Box h={6} w="1px" bg="blue.300" />
               <Heading size="md" color="blue.900">
                 销售对练 - {customer.name}
               </Heading>
             </HStack>
-            <HStack gap={4}>
-              <Text fontSize="sm" color="blue.700">
-                当前得分:
-              </Text>
-              <StarRating score={currentScore} />
-            </HStack>
           </Flex>
         </Container>
       </Box>
 
       <Container maxW="container.xl" py={8}>
-        <Grid templateColumns={{ base: '1fr', lg: '1fr 2fr' }} gap={8}>
+        <Grid templateColumns={{ base: '1fr', lg: '1fr 2fr' }} gap={8} alignItems="start">
           {/* 左侧 - 客户信息卡片 */}
           <Box>
             <Box
@@ -324,7 +322,7 @@ export default function DetailPage() {
                 </Text>
               </VStack>
 
-              <VStack align="stretch" gap={6}>
+              <VStack align="stretch" gap={6} flex={1}>
                 {/* 基本信息 */}
                 <Box>
                   <Heading size="sm" color="blue.900" mb={3} display="flex" alignItems="center">
@@ -397,7 +395,7 @@ export default function DetailPage() {
                 </Box>
 
                 {/* 背景介绍 */}
-                <Box>
+                <Box flex={1}>
                   <Heading size="sm" color="blue.900" mb={3}>
                     背景介绍
                   </Heading>
@@ -418,6 +416,7 @@ export default function DetailPage() {
               bg="whiteAlpha.900"
               backdropFilter="blur(10px)"
               shadow="lg"
+              minH="600px"
               h="600px"
               display="flex"
               flexDirection="column"
@@ -483,32 +482,48 @@ export default function DetailPage() {
                 </VStack>
               </Box>
 
-              {/* 操作按钮 */}
+              {/* 输入区域 */}
               <Box
                 borderTopWidth="1px"
                 borderColor="blue.100"
                 p={4}
                 flexShrink={0}
               >
-                <HStack gap={2}>
-                  <Button
-                    flex={1}
-                    colorScheme="blue"
-                    bg="blue.600"
-                    _hover={{ bg: 'blue.700' }}
-                  >
-                    继续对话
-                  </Button>
-                  <Button
-                    variant="outline"
-                    borderColor="blue.300"
-                    color="blue.600"
+                <VStack gap={3}>
+                  <Textarea
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    placeholder="输入您的回复或点击麦克风使用语音输入..."
+                    minH="80px"
+                    borderColor="blue.200"
+                    _focus={{ borderColor: 'blue.400', boxShadow: '0 0 0 1px #3182CE' }}
                     bg="white"
-                    _hover={{ bg: 'blue.50' }}
-                  >
-                    重新开始
-                  </Button>
-                </HStack>
+                  />
+                  <HStack gap={2} w="full">
+                    <Button
+                      onClick={isRecording ? handleStopRecording : handleStartRecording}
+                      variant="outline"
+                      borderColor="blue.300"
+                      color={isRecording ? "red.600" : "blue.600"}
+                      bg={isRecording ? "red.50" : "white"}
+                      _hover={{ bg: isRecording ? "red.100" : "blue.50" }}
+                    >
+                      <Icon as={isRecording ? FiMicOff : FiMic} w={4} h={4} mr={2} />
+                      {isRecording ? "停止录音" : "语音输入"}
+                    </Button>
+                    <Button
+                      onClick={handleSendMessage}
+                      colorScheme="blue"
+                      bg="blue.600"
+                      _hover={{ bg: 'blue.700' }}
+                      _disabled={{ bg: 'gray.300', cursor: 'not-allowed' }}
+                      flex={1}
+                    >
+                      <Icon as={FiSend} w={4} h={4} mr={2} />
+                      发送
+                    </Button>
+                  </HStack>
+                </VStack>
               </Box>
             </Box>
           </Box>
