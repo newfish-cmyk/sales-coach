@@ -13,8 +13,12 @@ import {
   Flex,
   Spinner,
   SimpleGrid,
-  Icon
+  Icon,
+  Button,
+  Separator,
+  Portal
 } from '@chakra-ui/react'
+import { Popover } from '@chakra-ui/react'
 import { 
   FiAward, 
   FiStar, 
@@ -22,16 +26,29 @@ import {
   FiCheckCircle,
   FiArrowDown,
   FiUser,
+  FiLogOut
 } from 'react-icons/fi'
 import { getSalesItems } from '@/lib/data'
 import { SalesItem } from '@/types'
+import { useAuth } from '@/hooks/useAuth'
 
 export default function ListPage() {
   const [items, setItems] = useState<SalesItem[]>([])
   const [loading, setLoading] = useState(true)
   const router = useRouter()
+  const { user, logout, loading: authLoading } = useAuth()
 
   useEffect(() => {
+    // 等待认证状态确定
+    if (authLoading) return
+
+    // 如果没有用户，跳转到登录页
+    if (!user) {
+      router.push('/login')
+      return
+    }
+
+    // 如果有用户，加载数据
     const loadItems = async () => {
       try {
         const data = await getSalesItems()
@@ -44,7 +61,7 @@ export default function ListPage() {
     }
 
     loadItems()
-  }, [])
+  }, [user, authLoading, router])
 
   const handleItemClick = (itemId: string, isLocked: boolean) => {
     if (!isLocked) {
@@ -131,17 +148,53 @@ export default function ListPage() {
             >
               销售对练系统
             </Heading>
-            <Box
-              w={10}
-              h={10}
-              bg="blue.600"
-              borderRadius="full"
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-            >
-              <Icon as={FiUser} w={5} h={5} color="white" />
-            </Box>
+            <Popover.Root>
+              <Popover.Trigger asChild>
+                <Button
+                  bg="blue.600"
+                  borderRadius="full"
+                  w={10}
+                  h={10}
+                  minW="auto"
+                  _hover={{ bg: "blue.700" }}
+                  transition="background-color 0.2s"
+                >
+                  <Icon as={FiUser} w={5} h={5} color="white" />
+                </Button>
+              </Popover.Trigger>
+              <Popover.Positioner>
+                <Popover.Content w="200px">
+                  <Popover.Arrow>
+                    <Popover.ArrowTip />
+                  </Popover.Arrow>
+                  <Popover.Body>
+                    <VStack gap={3} align="stretch">
+                      <Box>
+                        <Text fontSize="sm" color="gray.600" mb={1}>
+                          当前用户
+                        </Text>
+                        <Text fontWeight="semibold" color="gray.900">
+                          {user?.username || '用户'}
+                        </Text>
+                      </Box>
+                      <Separator />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        colorScheme="red"
+                        onClick={async () => {
+                          // 立即跳转，避免状态更新导致的认证检查
+                          router.push('/')
+                          await logout()
+                        }}
+                      >
+                        <Icon as={FiLogOut} mr={2} />登出
+                      </Button>
+                    </VStack>
+                  </Popover.Body>
+                </Popover.Content>
+              </Popover.Positioner>
+            </Popover.Root>
           </HStack>
         </Container>
       </Box>
