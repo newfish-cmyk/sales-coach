@@ -15,7 +15,7 @@ import {
   Field
 } from '@chakra-ui/react'
 import NextLink from 'next/link'
-import { useAuth } from '@/hooks/useAuth'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function AdminLoginPage() {
   const router = useRouter()

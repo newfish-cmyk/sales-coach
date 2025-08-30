@@ -9,6 +9,7 @@
     "lint": "eslint",
     "type-check": "tsc --noEmit",
     "init-data": "tsx scripts/initMockData.ts",
+    "db:optimize": "tsx scripts/optimizeDatabase.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -28,7 +29,8 @@
     "next": "15.5.2",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "react-icons": "^5.5.0"
+    "react-icons": "^5.5.0",
+    "swr": "^2.3.6"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

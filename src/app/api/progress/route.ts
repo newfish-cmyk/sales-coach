@@ -8,17 +8,19 @@ async function progressHandler() {
   await connectDB()
   const user = await requireAuth()
 
-    // 获取所有关卡
-    const cases = await Case.find({}).sort({ orderIndex: 1 })
-    
-    // 获取用户的所有进度记录
-    const progressRecords = await Progress.find({ userId: user._id }).populate('caseId')
+  // 简化：去除服务端缓存，交由客户端处理
 
-    // 创建进度映射
+    // 获取所有关卡 (使用lean()提升性能)
+    const cases = await Case.find({}).lean().sort({ orderIndex: 1 })
+    
+    // 获取用户的所有进度记录 (使用lean()提升性能)
+    const progressRecords = await Progress.find({ userId: user._id }).lean()
+
+    // 创建进度映射 (caseId直接是ObjectId，不需要populate)
     const progressMap = new Map()
     progressRecords.forEach(progress => {
-      if (progress.caseId && progress.caseId._id) {
-        progressMap.set(progress.caseId._id.toString(), progress)
+      if (progress.caseId) {
+        progressMap.set(progress.caseId.toString(), progress)
       }
     })
 

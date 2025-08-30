@@ -15,7 +15,8 @@ import {
   Field
 } from '@chakra-ui/react'
 import NextLink from 'next/link'
-import { useAuth } from '@/hooks/useAuth'
+import { useAuth } from '@/contexts/AuthContext'
+import { OverlayLoading } from '@/components/OverlayLoading'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -113,7 +114,12 @@ export default function RegisterPage() {
   }
 
   return (
-    <Box minH="100vh" py={20} px={4} bg="blue.50">
+    <>
+      <OverlayLoading 
+        isVisible={isLoading || authLoading} 
+        message={isLoading ? "正在注册..." : "验证身份中..."} 
+      />
+      <Box minH="100vh" py={20} px={4} bg="blue.50">
       <Container maxW="md">
         <Box bg="white" borderRadius="lg" borderWidth="1px" borderColor="gray.200" p={8}>
           <VStack gap={6}>
@@ -228,5 +234,6 @@ export default function RegisterPage() {
         </Box>
       </Container>
     </Box>
+    </>
   )
 }

@@ -13,7 +13,7 @@ import {
   Separator
 } from '@chakra-ui/react'
 import Link from 'next/link'
-import { useAuth } from '@/hooks/useAuth'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface AdminLayoutProps {
   children: ReactNode

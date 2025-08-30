@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useParams } from 'next/navigation'
 import { useRequest } from 'ahooks'
+import Image from 'next/image'
 import {
   Container,
   VStack,
@@ -225,10 +226,13 @@ export default function DetailPage() {
                   mb={4}
                 >
                   {customer.avatar ? (
-                    <img
+                    <Image
                       src={customer.avatar}
                       alt={customer.name}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      width={120}
+                      height={120}
+                      className="object-cover rounded-full"
+                      priority // 详情页头像优先加载
                     />
                   ) : (
                     <Text color="blue.700" fontWeight="bold" fontSize="2xl">

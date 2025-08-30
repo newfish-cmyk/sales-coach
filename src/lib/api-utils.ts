@@ -1,6 +1,40 @@
 import { NextResponse } from 'next/server'
 import { ApiResponse } from './http'
 
+// API响应缓存管理
+const cache = new Map<string, { data: any; timestamp: number; ttl: number }>()
+
+// 简单的内存缓存，生产环境建议使用Redis
+export function getCachedData<T>(key: string): T | null {
+  const cached = cache.get(key)
+  if (!cached) return null
+  
+  if (Date.now() - cached.timestamp > cached.ttl) {
+    cache.delete(key)
+    return null
+  }
+  
+  return cached.data
+}
+
+export function setCachedData<T>(key: string, data: T, ttlMs: number = 60000): void {
+  cache.set(key, {
+    data,
+    timestamp: Date.now(),
+    ttl: ttlMs
+  })
+}
+
+// 清理过期缓存
+setInterval(() => {
+  const now = Date.now()
+  for (const [key, value] of cache.entries()) {
+    if (now - value.timestamp > value.ttl) {
+      cache.delete(key)
+    }
+  }
+}, 60000) // 每分钟清理一次
+
 // 创建成功响应
 export function createSuccessResponse<T>(
   data: T,
