@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import connectDB from '@/lib/mongodb'
 import { requireAuth } from '@/lib/auth'
+import { apiHandler, createErrorResponse } from '@/lib/api-utils'
 import Progress from '@/models/Progress'
 import Attempts from '@/models/Attempts'
 import Case from '@/models/Case'
@@ -18,28 +19,21 @@ interface ChatRequest {
   conversationHistory: ChatMessage[]
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    await connectDB()
-    const user = await requireAuth()
-    
-    const { caseId, message, conversationHistory }: ChatRequest = await request.json()
+async function chatHandler(request: NextRequest) {
+  await connectDB()
+  const user = await requireAuth()
+  
+  const { caseId, message, conversationHistory }: ChatRequest = await request.json()
 
-    if (!caseId || !message) {
-      return NextResponse.json(
-        { error: 'Case ID and message are required' },
-        { status: 400 }
-      )
-    }
+  if (!caseId || !message) {
+    throw new Error('Case ID and message are required')
+  }
 
-    // 验证关卡是否存在
-    const caseExists = await Case.findById(caseId)
-    if (!caseExists) {
-      return NextResponse.json(
-        { error: 'Case not found' },
-        { status: 404 }
-      )
-    }
+  // 验证关卡是否存在
+  const caseExists = await Case.findById(caseId)
+  if (!caseExists) {
+    throw new Error('Case not found')
+  }
 
     // 添加用户消息到对话历史
     const userMessage: ChatMessage = {
@@ -127,28 +121,21 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      message: assistantMessage,
-      conversationHistory: finalHistory,
-      isComplete,
-      result: isComplete ? {
-        stars: attemptData?.stars,
-        score: attemptData?.score,
-        report: attemptData?.report,
-        totalAttempts: progressData?.totalAttempts,
-        bestScore: progressData?.bestScore
-      } : null
-    })
-
-  } catch (error) {
-    console.error('Chat API error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+  return {
+    message: assistantMessage,
+    conversationHistory: finalHistory,
+    isComplete,
+    result: isComplete ? {
+      stars: attemptData?.stars,
+      score: attemptData?.score,
+      report: attemptData?.report,
+      totalAttempts: progressData?.totalAttempts,
+      bestScore: progressData?.bestScore
+    } : null
   }
 }
+
+export const POST = apiHandler(chatHandler)
 
 function generateReport(score: number, conversationHistory: ChatMessage[]): string {
   const userMessages = conversationHistory.filter(msg => msg.role === 'user')

@@ -1,14 +1,12 @@
-import { NextResponse } from 'next/server'
 import connectDB from '@/lib/mongodb'
 import { requireAuth } from '@/lib/auth'
+import { apiHandler } from '@/lib/api-utils'
 import Progress from '@/models/Progress'
 import Case from '@/models/Case'
-import mongoose from 'mongoose'
 
-export async function GET() {
-  try {
-    await connectDB()
-    const user = await requireAuth()
+async function progressHandler() {
+  await connectDB()
+  const user = await requireAuth()
 
     // 获取所有关卡
     const cases = await Case.find({}).sort({ orderIndex: 1 })
@@ -80,26 +78,17 @@ export async function GET() {
     const maxTotalStars = cases.length * 5
     const completionPercentage = maxTotalStars > 0 ? Math.round((totalStars / maxTotalStars) * 100) : 0
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        cases: progressData,
-        summary: {
-          completedCount,
-          totalStars,
-          maxTotalStars,
-          completionPercentage,
-          totalAttempts,
-          totalCases: cases.length
-        }
-      }
-    })
-
-  } catch (error) {
-    console.error('Progress API error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+  return {
+    cases: progressData,
+    summary: {
+      completedCount,
+      totalStars,
+      maxTotalStars,
+      completionPercentage,
+      totalAttempts,
+      totalCases: cases.length
+    }
   }
 }
+
+export const GET = apiHandler(progressHandler)

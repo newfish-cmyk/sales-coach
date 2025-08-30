@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useRequest } from 'ahooks'
 import {
   Container,
   VStack,
@@ -26,39 +27,29 @@ import {
   FiUser,
   FiLogOut
 } from 'react-icons/fi'
-import { getUserProgress } from '@/lib/data'
-import { CaseWithProgress, UserProgressData } from '@/types'
+import { getUserProgress } from '@/lib/api'
 import { useAuth } from '@/hooks/useAuth'
 
 export default function ListPage() {
-  const [progressData, setProgressData] = useState<UserProgressData | null>(null)
-  const [loading, setLoading] = useState(true)
   const router = useRouter()
   const { user, logout, loading: authLoading } = useAuth()
 
-  useEffect(() => {
-    // 等待认证状态确定
-    if (authLoading) return
-
-    // 如果没有用户，跳转到登录页
-    if (!user) {
-      router.push('/login')
-      return
-    }
-
-    // 如果有用户，加载进度数据
-    const loadProgress = async () => {
-      try {
-        const data = await getUserProgress()
-        setProgressData(data)
-      } catch (error) {
+  // 使用useRequest获取进度数据
+  const { data: progressData, loading } = useRequest(
+    () => getUserProgress(),
+    {
+      ready: !!user && !authLoading, // 等待用户认证完成
+      onError: (error) => {
         console.error('Failed to load progress:', error)
-      } finally {
-        setLoading(false)
       }
     }
+  )
 
-    loadProgress()
+  useEffect(() => {
+    // 如果认证已完成且没有用户，跳转到登录页
+    if (!authLoading && !user) {
+      router.push('/login')
+    }
   }, [user, authLoading, router])
 
   const handleItemClick = (caseId: string, isLocked: boolean) => {
@@ -67,7 +58,7 @@ export default function ListPage() {
     }
   }
 
-  if (!progressData) {
+  if (loading || !progressData) {
     return (
       <Box minH="100vh" bg="gray.50">
         <Container maxW="container.xl" py={8}>
@@ -81,19 +72,6 @@ export default function ListPage() {
   }
 
   const { cases, summary } = progressData
-
-  if (loading) {
-    return (
-      <Box minH="100vh" bg="gray.50">
-        <Container maxW="container.xl" py={8}>
-          <VStack gap={4} justify="center" minH="50vh">
-            <Spinner size="xl" />
-            <Text>加载中...</Text>
-          </VStack>
-        </Container>
-      </Box>
-    )
-  }
 
 
   const StarRating = ({ stars, maxStars }: { stars: number; maxStars: number }) => {

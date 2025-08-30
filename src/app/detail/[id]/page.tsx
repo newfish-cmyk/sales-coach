@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useParams } from 'next/navigation'
+import { useRequest } from 'ahooks'
 import {
   Container,
   VStack,
@@ -29,7 +30,7 @@ import {
   FiMicOff,
   FiSend
 } from 'react-icons/fi'
-import { getCase, sendChatMessage } from '@/lib/data'
+import { getCaseById, sendChatMessage } from '@/lib/api'
 import { Case, ChatMessage, ChatResult } from '@/types'
 
 
@@ -49,20 +50,45 @@ interface CustomerProfile {
 export default function DetailPage() {
   const router = useRouter()
   const params = useParams()
-  const [item, setItem] = useState<Case | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [mounted, setMounted] = useState(false)
   
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isRecording, setIsRecording] = useState(false)
   const [inputText, setInputText] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
   const [chatResult, setChatResult] = useState<ChatResult | null>(null)
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  // 获取关卡详情
+  const { data: item, loading } = useRequest(
+    () => getCaseById(params.id as string),
+    {
+      ready: !!params.id,
+      onError: (error) => {
+        console.error('Failed to load case:', error)
+      }
+    }
+  )
+
+  // 发送聊天消息
+  const { run: handleSendMessage, loading: sendingMessage } = useRequest(
+    (messageContent: string) => sendChatMessage({
+      caseId: params.id as string,
+      message: messageContent,
+      conversationHistory: messages
+    }),
+    {
+      manual: true,
+      onSuccess: (data) => {
+        setMessages(data.conversationHistory)
+        if (data.isComplete) {
+          setIsComplete(true)
+          setChatResult(data.result)
+        }
+      },
+      onError: (error) => {
+        console.error('Failed to send message:', error)
+      }
+    }
+  )
 
   // 对话处理函数
   const handleStartRecording = () => {
@@ -75,31 +101,12 @@ export default function DetailPage() {
     console.log("停止录音")
   }
 
-  const handleSendMessage = async () => {
-    if (!inputText.trim() || isLoading || isComplete) return
-
-    setIsLoading(true)
+  const onSendMessage = () => {
+    if (!inputText.trim() || sendingMessage || isComplete) return
+    
     const messageContent = inputText.trim()
     setInputText("")
-
-    try {
-      const data = await sendChatMessage(params.id as string, messageContent, messages)
-      
-      if (data && data.success) {
-        setMessages(data.conversationHistory)
-        
-        if (data.isComplete) {
-          setIsComplete(true)
-          setChatResult(data.result)
-        }
-      } else {
-        console.error('Failed to send message')
-      }
-    } catch (error) {
-      console.error('Failed to send message:', error)
-    } finally {
-      setIsLoading(false)
-    }
+    handleSendMessage(messageContent)
   }
 
   const handleRestart = () => {
@@ -126,25 +133,7 @@ export default function DetailPage() {
   }
 
 
-  useEffect(() => {
-    const loadItem = async () => {
-      try {
-        const data = await getCase(params.id as string)
-        setItem(data)
-      } catch (error) {
-        console.error('Failed to load item:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    if (params.id) {
-      loadItem()
-    }
-  }, [params.id])
-
-
-  if (!mounted || loading) {
+  if (loading) {
     return (
       <Box minH="100vh" bg="gray.50">
         <Container maxW="container.xl" py={8}>
@@ -424,7 +413,7 @@ export default function DetailPage() {
                     </Flex>
                   ))}
                   
-                  {isLoading && (
+                  {sendingMessage && (
                     <Flex justify="flex-start">
                       <Box
                         maxW="70%"
@@ -522,7 +511,7 @@ export default function DetailPage() {
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault()
-                          handleSendMessage()
+                          onSendMessage()
                         }
                       }}
                       placeholder="输入您的回复或点击麦克风使用语音输入..."
@@ -530,7 +519,7 @@ export default function DetailPage() {
                       borderColor="blue.200"
                       _focus={{ borderColor: 'blue.400', boxShadow: '0 0 0 1px #3182CE' }}
                       bg="white"
-                      disabled={isLoading || isComplete}
+                      disabled={sendingMessage || isComplete}
                     />
                     <HStack gap={2} w="full">
                       <Button
@@ -540,19 +529,19 @@ export default function DetailPage() {
                         color={isRecording ? "red.600" : "blue.600"}
                         bg={isRecording ? "red.50" : "white"}
                         _hover={{ bg: isRecording ? "red.100" : "blue.50" }}
-                        disabled={isLoading || isComplete}
+                        disabled={sendingMessage || isComplete}
                       >
                         <Icon as={isRecording ? FiMicOff : FiMic} w={4} h={4} mr={2} />
                         {isRecording ? "停止录音" : "语音输入"}
                       </Button>
                       <Button
-                        onClick={handleSendMessage}
+                        onClick={onSendMessage}
                         colorScheme="blue"
                         bg="blue.600"
                         _hover={{ bg: 'blue.700' }}
                         _disabled={{ bg: 'gray.300', cursor: 'not-allowed' }}
-                        disabled={!inputText.trim() || isLoading || isComplete}
-                        loading={isLoading}
+                        disabled={!inputText.trim() || sendingMessage || isComplete}
+                        loading={sendingMessage}
                         loadingText="发送中..."
                         flex={1}
                       >
