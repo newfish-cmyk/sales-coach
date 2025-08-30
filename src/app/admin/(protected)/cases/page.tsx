@@ -10,20 +10,13 @@ import {
   Button,
   Card,
   Badge,
-  Table,
   IconButton,
-  // Modal,
-  Input,
-  Textarea,
-  SimpleGrid,
-  Field,
   Tag,
   Avatar,
-  Container
+  Container,
+  SimpleGrid,
+  Stack
 } from '@chakra-ui/react'
-import { motion } from 'framer-motion'
-
-const MotionBox = motion(Box)
 
 interface CaseData {
   id: string
@@ -213,82 +206,8 @@ export default function CasesManagePage() {
 
 
   return (
-    <Box
-      minH="100vh"
-      bg="blue.50"
-      position="relative"
-      overflow="hidden"
-    >
-      {/* Background Pattern */}
-      <Box
-        position="absolute"
-        inset="0"
-        opacity="0.05"
-        bgImage="/api/placeholder/100/100"
-        bgRepeat="repeat"
-        bgSize="50px 50px"
-      />
-      
-      {/* Floating Elements */}
-      <MotionBox
-        position="absolute"
-        top="20"
-        left="20"
-        w="32"
-        h="32"
-        bg="blue.200"
-        borderRadius="full"
-        opacity="0.2"
-        animate={{
-          scale: [1, 1.1, 1],
-          opacity: [0.2, 0.3, 0.2]
-        }}
-        transition={{
-          duration: 3,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
-      <MotionBox
-        position="absolute"
-        bottom="20"
-        right="20"
-        w="24"
-        h="24"
-        bg="blue.300"
-        borderRadius="full"
-        opacity="0.2"
-        animate={{
-          y: [0, -20, 0],
-          opacity: [0.2, 0.4, 0.2]
-        }}
-        transition={{
-          duration: 4,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
-      <MotionBox
-        position="absolute"
-        top="40"
-        right="32"
-        w="16"
-        h="16"
-        bg="blue.400"
-        borderRadius="full"
-        opacity="0.15"
-        animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.15, 0.25, 0.15]
-        }}
-        transition={{
-          duration: 5,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
-
-      <Container maxW="6xl" py={8} position="relative" zIndex={10}>
+    <Box minH="100vh" bg="gray.50">
+      <Container maxW="6xl" py={8}>
         <VStack align="stretch" gap={6}>
           <HStack justify="space-between">
             <Box>
@@ -304,99 +223,107 @@ export default function CasesManagePage() {
             </Button>
           </HStack>
 
-          {/* Cases Table */}
-          <Card.Root bg="white" shadow="lg" borderRadius="xl">
-            <Card.Body>
-              {cases.length === 0 ? (
+          {/* Cases Cards */}
+          {cases.length === 0 ? (
+            <Card.Root bg="white" shadow="lg" borderRadius="xl">
+              <Card.Body>
                 <VStack py={8}>
                   <Text color="gray.500">暂无案例数据</Text>
                   <Button colorScheme="blue" onClick={handleCreate}>
                     创建第一个案例
                   </Button>
                 </VStack>
-              ) : (
-                <Table.Root size="sm">
-                  <Table.Header>
-                    <Table.Row>
-                      <Table.ColumnHeader>排序</Table.ColumnHeader>
-                      <Table.ColumnHeader>客户</Table.ColumnHeader>
-                      <Table.ColumnHeader>介绍</Table.ColumnHeader>
-                      <Table.ColumnHeader>预算</Table.ColumnHeader>
-                      <Table.ColumnHeader>决策级别</Table.ColumnHeader>
-                      <Table.ColumnHeader>性格标签</Table.ColumnHeader>
-                      <Table.ColumnHeader>操作</Table.ColumnHeader>
-                    </Table.Row>
-                  </Table.Header>
-                  <Table.Body>
-                    {cases.map((caseData) => (
-                      <Table.Row key={caseData.id}>
-                        <Table.Cell>
-                          <Badge colorScheme="blue" variant="subtle">
-                            {caseData.orderIndex}
-                          </Badge>
-                        </Table.Cell>
-                        <Table.Cell>
-                          <HStack>
-                            <Avatar.Root >
-                              <Avatar.Image src={caseData.avatar} />
-                              <Avatar.Fallback>
-                                {caseData.customerName.charAt(0)}
-                              </Avatar.Fallback>
-                            </Avatar.Root>
-                            <Text fontWeight="medium">{caseData.customerName}</Text>
-                          </HStack>
-                        </Table.Cell>
-                        <Table.Cell>
-                          <Text fontSize="sm" maxW="200px">
-                            {caseData.intro}
+              </Card.Body>
+            </Card.Root>
+          ) : (
+            <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap={6}>
+              {cases.map((caseData) => (
+                <Card.Root key={caseData.id} bg="white" shadow="lg" borderRadius="xl" overflow="hidden">
+                  <Card.Body p={6}>
+                    <VStack align="stretch" gap={4}>
+                      {/* Header with Avatar and Name */}
+                      <HStack justify="space-between" align="start">
+                        <HStack>
+                          <Avatar.Root size="md">
+                            <Avatar.Image src={caseData.avatar} />
+                            <Avatar.Fallback>
+                              {caseData.customerName.charAt(0)}
+                            </Avatar.Fallback>
+                          </Avatar.Root>
+                          <Box>
+                            <Text fontWeight="bold" fontSize="lg">
+                              {caseData.customerName}
+                            </Text>
+                            <Badge colorScheme="blue" variant="subtle" size="sm">
+                              排序 {caseData.orderIndex}
+                            </Badge>
+                          </Box>
+                        </HStack>
+                        <HStack gap={1}>
+                          <IconButton
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleEdit(caseData)}
+                          >
+                            ✏️
+                          </IconButton>
+                          <IconButton
+                            size="sm"
+                            variant="ghost"
+                            colorScheme="red"
+                            onClick={() => handleDelete(caseData.id)}
+                          >
+                            🗑️
+                          </IconButton>
+                        </HStack>
+                      </HStack>
+
+                      {/* Introduction */}
+                      <Box>
+                        <Text fontSize="sm" color="gray.600" lineHeight="tall">
+                          {caseData.intro}
+                        </Text>
+                      </Box>
+
+                      {/* Metadata */}
+                      <Stack gap={3}>
+                        <HStack justify="space-between">
+                          <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                            预算:
                           </Text>
-                        </Table.Cell>
-                        <Table.Cell>
-                          <Text fontSize="sm">{caseData.metaData.budget}</Text>
-                        </Table.Cell>
-                        <Table.Cell>
-                          <Text fontSize="sm">{caseData.metaData.decision_level}</Text>
-                        </Table.Cell>
-                        <Table.Cell>
-                          <HStack flexWrap="wrap" gap={1}>
-                            {caseData.metaData.personality.slice(0, 2).map((trait, index) => (
-                              <Tag.Root key={index} size="sm" colorScheme="purple" variant="subtle">
-                                {trait}
-                              </Tag.Root>
-                            ))}
-                            {caseData.metaData.personality.length > 2 && (
-                              <Tag.Root size="sm" variant="subtle">
-                                +{caseData.metaData.personality.length - 2}
-                              </Tag.Root>
-                            )}
-                          </HStack>
-                        </Table.Cell>
-                        <Table.Cell>
-                          <HStack gap={1}>
-                            <IconButton
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleEdit(caseData)}
-                            >
-                              ✏️
-                            </IconButton>
-                            <IconButton
-                              size="sm"
-                              variant="ghost"
-                              colorScheme="red"
-                              onClick={() => handleDelete(caseData.id)}
-                            >
-                              🗑️
-                            </IconButton>
-                          </HStack>
-                        </Table.Cell>
-                      </Table.Row>
-                    ))}
-                  </Table.Body>
-                </Table.Root>
-              )}
-            </Card.Body>
-          </Card.Root>
+                          <Text fontSize="sm" color="green.600" fontWeight="medium">
+                            {caseData.metaData.budget}
+                          </Text>
+                        </HStack>
+                        <HStack justify="space-between">
+                          <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                            决策级别:
+                          </Text>
+                          <Text fontSize="sm" color="blue.600" fontWeight="medium">
+                            {caseData.metaData.decision_level}
+                          </Text>
+                        </HStack>
+                      </Stack>
+
+                      {/* Personality Tags */}
+                      <Box>
+                        <Text fontSize="sm" fontWeight="medium" color="gray.700" mb={2}>
+                          性格标签:
+                        </Text>
+                        <HStack flexWrap="wrap" gap={1}>
+                          {caseData.metaData.personality.map((trait, index) => (
+                            <Tag.Root key={index} size="sm" colorScheme="purple" variant="subtle">
+                              {trait}
+                            </Tag.Root>
+                          ))}
+                        </HStack>
+                      </Box>
+                    </VStack>
+                  </Card.Body>
+                </Card.Root>
+              ))}
+            </SimpleGrid>
+          )}
         </VStack>
       </Container>
     </Box>

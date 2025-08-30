@@ -34,7 +34,7 @@ export default function AdminLoginPage() {
 
   useEffect(() => {
     if (user && user.role === 'admin') {
-      router.push('/admin/dashboard')
+      router.push('/admin/dataset')
     }
   }, [user, router])
 
@@ -77,7 +77,7 @@ export default function AdminLoginPage() {
       const data = await response.json()
       
       if (response.ok) {
-        router.push('/admin/dashboard')
+        router.push('/admin/dataset')
         window.location.reload()
       } else {
         setErrorMessage(data.error || '登录失败')
