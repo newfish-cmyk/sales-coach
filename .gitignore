@@ -79,3 +79,4 @@ lerna-debug.log*
 # Temporary folders
 tmp/
 temp/
+newLanding/
