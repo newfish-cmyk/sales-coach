@@ -18,6 +18,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Database Setup
 - `npx tsx scripts/initMockData.ts` - Populate database with 6 customer personas
+- Admin user is automatically created on first database connection (username: root, password from ADMIN_PASSWORD env var)
 
 ## Architecture
 
@@ -62,4 +63,7 @@ Each case includes personality traits, decision level, budget range, and specifi
 Copy `.env.example` to `.env.local` and configure:
 ```
 MONGODB_URI=mongodb://localhost:27017/sales-coach
+ADMIN_PASSWORD=your_admin_password
 ```
+
+The admin user (username: `root`) will be automatically created on first database connection using the password from `ADMIN_PASSWORD`.

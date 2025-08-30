@@ -33,3 +33,21 @@ export async function requireAuth(): Promise<IUser> {
 export function isAuthenticated(user: IUser | null): user is IUser {
   return user !== null
 }
+
+export async function requireAdminAuth(): Promise<IUser> {
+  const user = await getCurrentUser()
+  
+  if (!user) {
+    throw new Error('Authentication required')
+  }
+  
+  if (user.role !== 'admin') {
+    throw new Error('Admin access required')
+  }
+  
+  return user
+}
+
+export function isAdmin(user: IUser | null): boolean {
+  return user !== null && user.role === 'admin'
+}

@@ -1,4 +1,5 @@
 import mongoose from 'mongoose'
+import bcrypt from 'bcryptjs'
 
 const MONGODB_URI = process.env.MONGODB_URI
 
@@ -43,7 +44,51 @@ async function connectDB() {
     throw e
   }
 
+  // 在连接成功后初始化管理员用户
+  await initializeAdmin()
+
   return cached.conn
+}
+
+async function initializeAdmin() {
+  try {
+    const adminPassword = process.env.ADMIN_PASSWORD
+    if (!adminPassword) {
+      console.warn('ADMIN_PASSWORD not found. Admin user will not be created.')
+      return
+    }
+
+    // 动态导入User模型以避免循环依赖
+    const { default: User } = await import('../models/User')
+    
+    // 检查是否已经存在root用户
+    const existingAdmin = await User.findOne({ username: 'root' })
+    
+    if (existingAdmin) {
+      // 如果存在但不是管理员，更新为管理员
+      if (existingAdmin.role !== 'admin') {
+        existingAdmin.role = 'admin'
+        await existingAdmin.save()
+        console.log('✓ Updated existing root user to admin role')
+      }
+      return
+    }
+    
+    // 创建root管理员用户
+    const hashedPassword = await bcrypt.hash(adminPassword, 12)
+    
+    const adminUser = new User({
+      username: 'root',
+      password: hashedPassword,
+      role: 'admin'
+    })
+    
+    await adminUser.save()
+    console.log('✓ Admin user "root" created successfully')
+    
+  } catch (error) {
+    console.error('Error initializing admin user:', error)
+  }
 }
 
 export default connectDB
