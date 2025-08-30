@@ -5,13 +5,14 @@ import { requireAdminAuth } from '@/lib/auth'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await requireAdminAuth()
     await connectDB()
 
-    const caseItem = await Case.findById(params.id)
+    const { id } = await params
+    const caseItem = await Case.findById(id)
     
     if (!caseItem) {
       return NextResponse.json(
@@ -28,6 +29,7 @@ export async function GET(
         avatar: caseItem.avatar,
         orderIndex: caseItem.orderIndex,
         metaData: caseItem.metaData,
+        script: caseItem.script,
         createdAt: caseItem.createdAt
       }
     })
@@ -42,16 +44,17 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await requireAdminAuth()
     await connectDB()
 
+    const { id } = await params
     const data = await request.json()
     
     const updatedCase = await Case.findByIdAndUpdate(
-      params.id,
+      id,
       {
         customerName: data.customerName,
         intro: data.intro,
@@ -63,7 +66,8 @@ export async function PUT(
           personality: data.metaData.personality,
           points: data.metaData.points,
           background: data.metaData.background
-        }
+        },
+        script: data.script
       },
       { new: true, runValidators: true }
     )
@@ -84,6 +88,7 @@ export async function PUT(
         avatar: updatedCase.avatar,
         orderIndex: updatedCase.orderIndex,
         metaData: updatedCase.metaData,
+        script: updatedCase.script,
         createdAt: updatedCase.createdAt
       }
     })
@@ -106,13 +111,14 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await requireAdminAuth()
     await connectDB()
 
-    const deletedCase = await Case.findByIdAndDelete(params.id)
+    const { id } = await params
+    const deletedCase = await Case.findByIdAndDelete(id)
     
     if (!deletedCase) {
       return NextResponse.json(

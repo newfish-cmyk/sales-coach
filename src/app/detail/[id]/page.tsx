@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useParams } from 'next/navigation'
 import { useRequest } from 'ahooks'
@@ -31,11 +31,8 @@ import {
   FiMicOff,
   FiSend
 } from 'react-icons/fi'
-import { getCaseById, sendChatMessage } from '@/lib/api'
+// Remove unused imports since we use fetch directly now
 import { Case, ChatMessage, ChatResult } from '@/types'
-import { motion } from 'framer-motion'
-
-const MotionBox = motion(Box)
 
 
 interface CustomerProfile {
@@ -63,7 +60,13 @@ export default function DetailPage() {
 
   // 获取关卡详情
   const { data: item, loading } = useRequest(
-    () => getCaseById(params.id as string),
+    async () => {
+      const response = await fetch(`/api/cases/${params.id}`, {
+        credentials: 'include' // Include cookies for authentication
+      })
+      if (!response.ok) throw new Error('Failed to fetch case')
+      return response.json()
+    },
     {
       ready: !!params.id,
       onError: (error) => {
@@ -74,11 +77,20 @@ export default function DetailPage() {
 
   // 发送聊天消息
   const { run: handleSendMessage, loading: sendingMessage } = useRequest(
-    (messageContent: string) => sendChatMessage({
-      caseId: params.id as string,
-      message: messageContent,
-      conversationHistory: messages
-    }),
+    async (messageContent: string) => {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Include cookies for authentication
+        body: JSON.stringify({
+          caseId: params.id as string,
+          message: messageContent,
+          conversationHistory: messages
+        })
+      })
+      if (!response.ok) throw new Error('Failed to send message')
+      return response.json()
+    },
     {
       manual: true,
       onSuccess: (data) => {
@@ -120,21 +132,27 @@ export default function DetailPage() {
     setInputText('')
   }
 
-  // 扩展的客户档案数据
-  const getCustomerProfile = (item: Case): CustomerProfile => {
+  // 使用useMemo优化客户档案数据计算
+  const customer = useMemo((): CustomerProfile | null => {
+    // Handle API response wrapper
+    const caseData = item?.data || item
+    if (!caseData) return null
+    
     return {
-      id: item._id,
-      name: item.customerName,
-      avatar: item.avatar || '',
-      role: item.metaData.decision_level || '客户',
+      id: caseData._id,
+      name: caseData.customerName,
+      avatar: caseData.avatar || '',
+      role: caseData.metaData.decision_level || '客户',
       company: '某公司',
-      personality: item.metaData.personality || ['专业'],
-      painPoints: item.metaData.points || ['业务需求'],
-      budget: item.metaData.budget || '待定',
-      decisionMaker: item.metaData.decision_level?.includes('决策') || item.metaData.decision_level?.includes('总监') || item.metaData.decision_level?.includes('经理') || false,
-      background: item.metaData.background || '专业的商业客户，注重产品价值和服务质量。'
+      personality: caseData.metaData.personality || ['专业'],
+      painPoints: caseData.metaData.points || ['业务需求'],
+      budget: caseData.metaData.budget || '待定',
+      decisionMaker: caseData.metaData.decision_level?.includes('决策') || 
+                    caseData.metaData.decision_level?.includes('总监') || 
+                    caseData.metaData.decision_level?.includes('经理') || false,
+      background: caseData.metaData.background || '专业的商业客户，注重产品价值和服务质量。'
     }
-  }
+  }, [item])
 
 
   if (loading) {
@@ -150,7 +168,7 @@ export default function DetailPage() {
     )
   }
 
-  if (!item) {
+  if (!item || !customer) {
     return (
       <Center h="100vh">
         <VStack gap={4}>
@@ -165,8 +183,6 @@ export default function DetailPage() {
     )
   }
 
-  const customer = getCustomerProfile(item)
-
   return (
     <Box 
       minH="100vh" 
@@ -174,73 +190,12 @@ export default function DetailPage() {
       position="relative" 
       overflow="hidden"
     >
-      {/* Background Pattern */}
+      {/* Simplified Background - Static for better performance */}
       <Box
         position="absolute"
         inset="0"
-        opacity="0.05"
-        bgImage="/api/placeholder/100/100"
-        bgRepeat="repeat"
-        bgSize="50px 50px"
-      />
-      
-      {/* Floating Elements */}
-      <MotionBox
-        position="absolute"
-        top="20"
-        left="20"
-        w="32"
-        h="32"
-        bg="blue.200"
-        borderRadius="full"
-        opacity="0.2"
-        animate={{
-          scale: [1, 1.1, 1],
-          opacity: [0.2, 0.3, 0.2]
-        }}
-        transition={{
-          duration: 3,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
-      <MotionBox
-        position="absolute"
-        bottom="20"
-        right="20"
-        w="24"
-        h="24"
-        bg="blue.300"
-        borderRadius="full"
-        opacity="0.2"
-        animate={{
-          y: [0, -20, 0],
-          opacity: [0.2, 0.4, 0.2]
-        }}
-        transition={{
-          duration: 4,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
-      <MotionBox
-        position="absolute"
-        top="40"
-        right="32"
-        w="16"
-        h="16"
-        bg="blue.400"
-        borderRadius="full"
-        opacity="0.15"
-        animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.15, 0.25, 0.15]
-        }}
-        transition={{
-          duration: 5,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
+        opacity="0.02"
+        bg="blue.100"
       />
 
       <Box position="relative" zIndex={10}>

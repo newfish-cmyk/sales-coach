@@ -3,6 +3,7 @@
 import { createContext, useContext, useCallback, ReactNode } from 'react'
 import useSWR from 'swr'
 import { IUser } from '@/models/User'
+import axios from 'axios'
 
 interface AuthContextType {
   user: IUser | null
@@ -18,15 +19,15 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 // SWR fetcher function
 const fetcher = async (url: string) => {
-  const response = await fetch(url)
-  if (!response.ok) {
-    if (response.status === 401) {
+  try {
+    const response = await axios.get(url)
+    return response.data
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
       return { user: null }
     }
     throw new Error('Failed to fetch')
   }
-  const data = await response.json()
-  return data
 }
 
 interface AuthProviderProps {
@@ -50,55 +51,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const login = useCallback(async (username: string, password: string) => {
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      })
-
-      const responseData = await response.json()
-
-      if (response.ok) {
-        // 更新SWR缓存
-        await mutateAuth({ user: responseData.user }, false)
-        return { success: true, user: responseData.user }
-      } else {
-        return { success: false, error: responseData.error }
+      const response = await axios.post('/api/auth/login', { username, password })
+      
+      // 更新SWR缓存
+      await mutateAuth({ user: response.data.user }, false)
+      return { success: true, user: response.data.user }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return { success: false, error: error.response?.data?.error || 'Login failed' }
       }
-    } catch {
       return { success: false, error: 'Login failed' }
     }
   }, [mutateAuth])
 
   const register = useCallback(async (username: string, password: string) => {
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      })
-
-      const responseData = await response.json()
-
-      if (response.ok) {
-        return { success: true, user: responseData.user }
-      } else {
-        return { success: false, error: responseData.error }
+      const response = await axios.post('/api/auth/register', { username, password })
+      return { success: true, user: response.data.user }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return { success: false, error: error.response?.data?.error || 'Registration failed' }
       }
-    } catch {
       return { success: false, error: 'Registration failed' }
     }
   }, [])
 
   const logout = useCallback(async () => {
     try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-      })
+      await axios.post('/api/auth/logout')
     } catch (error) {
       console.error('Logout error:', error)
     } finally {

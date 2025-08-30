@@ -16,9 +16,7 @@ import {
 } from '@chakra-ui/react'
 import NextLink from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
-import { motion } from 'framer-motion'
-
-const MotionBox = motion(Box)
+import axios from 'axios'
 
 export default function AdminLoginPage() {
   const router = useRouter()
@@ -66,24 +64,16 @@ export default function AdminLoginPage() {
     setErrorMessage('')
     
     try {
-      const response = await fetch('/api/admin/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      })
+      const response = await axios.post('/api/admin/auth/login', formData)
       
-      const data = await response.json()
-      
-      if (response.ok) {
-        router.push('/admin/dataset')
-        window.location.reload()
-      } else {
-        setErrorMessage(data.error || '登录失败')
-      }
+      router.push('/admin/dataset')
+      window.location.reload()
     } catch (error) {
-      setErrorMessage('登录失败，请重试')
+      if (axios.isAxiosError(error)) {
+        setErrorMessage(error.response?.data?.error || '登录失败')
+      } else {
+        setErrorMessage('登录失败，请重试')
+      }
     } finally {
       setIsLoading(false)
     }
@@ -119,73 +109,12 @@ export default function AdminLoginPage() {
       position="relative" 
       overflow="hidden"
     >
-      {/* Background Pattern */}
+      {/* Simplified Background - Static for better performance */}
       <Box
         position="absolute"
         inset="0"
-        opacity="0.05"
-        bgImage="/api/placeholder/100/100"
-        bgRepeat="repeat"
-        bgSize="50px 50px"
-      />
-      
-      {/* Floating Elements */}
-      <MotionBox
-        position="absolute"
-        top="20"
-        left="20"
-        w="32"
-        h="32"
-        bg="blue.200"
-        borderRadius="full"
-        opacity="0.2"
-        animate={{
-          scale: [1, 1.1, 1],
-          opacity: [0.2, 0.3, 0.2]
-        }}
-        transition={{
-          duration: 3,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
-      <MotionBox
-        position="absolute"
-        bottom="20"
-        right="20"
-        w="24"
-        h="24"
-        bg="blue.300"
-        borderRadius="full"
-        opacity="0.2"
-        animate={{
-          y: [0, -20, 0],
-          opacity: [0.2, 0.4, 0.2]
-        }}
-        transition={{
-          duration: 4,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
-      <MotionBox
-        position="absolute"
-        top="40"
-        right="32"
-        w="16"
-        h="16"
-        bg="blue.400"
-        borderRadius="full"
-        opacity="0.15"
-        animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.15, 0.25, 0.15]
-        }}
-        transition={{
-          duration: 5,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
+        opacity="0.02"
+        bg="blue.100"
       />
 
       <Container maxW="md" position="relative" zIndex={10}>

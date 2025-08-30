@@ -11,11 +11,8 @@ import {
   Grid,
   Icon,
 } from '@chakra-ui/react'
-import { motion } from 'framer-motion'
 import { FiArrowRight, FiPhone, FiMail } from 'react-icons/fi'
 import { useRouter } from 'next/navigation'
-
-const MotionBox = motion(Box)
 
 export default function CTA() {
   const router = useRouter()
@@ -27,54 +24,12 @@ export default function CTA() {
       position="relative"
       overflow="hidden"
     >
-      {/* Background Elements */}
+      {/* Simplified Background - Static for better performance */}
       <Box
         position="absolute"
         inset="0"
-        opacity="0.1"
-        bgImage="/api/placeholder/100/100"
-        bgRepeat="repeat"
-        bgSize="50px 50px"
-      />
-      <MotionBox
-        position="absolute"
-        top="0"
-        right="0"
-        w="96"
-        h="96"
+        opacity="0.05"
         bg="blue.500"
-        borderRadius="full"
-        opacity="0.2"
-        transform="translate(48px, -48px)"
-        animate={{
-          scale: [1, 1.1, 1],
-          opacity: [0.2, 0.3, 0.2]
-        }}
-        transition={{
-          duration: 4,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
-      <MotionBox
-        position="absolute"
-        bottom="0"
-        left="0"
-        w="64"
-        h="64"
-        bg="blue.400"
-        borderRadius="full"
-        opacity="0.2"
-        transform="translate(-32px, 32px)"
-        animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.2, 0.4, 0.2]
-        }}
-        transition={{
-          duration: 5,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
       />
       
       <Container maxW="6xl" px={6} position="relative" zIndex={10}>
@@ -111,12 +66,8 @@ export default function CTA() {
               { number: '24/7', label: '技术支持' },
               { number: '定制', label: '专属方案' }
             ].map((item, index) => (
-              <MotionBox
+              <Box
                 key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
               >
                 <Box
                   bg="whiteAlpha.100"
@@ -135,7 +86,7 @@ export default function CTA() {
                     {item.label}
                   </Text>
                 </Box>
-              </MotionBox>
+              </Box>
             ))}
           </Grid>
           

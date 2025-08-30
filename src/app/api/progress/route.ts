@@ -30,7 +30,7 @@ async function progressHandler() {
     let totalAttempts = 0
 
     const progressData = cases.map(case_ => {
-      const progress = progressMap.get(case_._id.toString())
+      const progress = progressMap.get((case_._id as any).toString())
       const isCompleted = progress && progress.firstCompletedAt
       const stars = progress ? progress.bestStars : 0
       const score = progress ? progress.bestScore : 0
@@ -41,7 +41,7 @@ async function progressHandler() {
       totalAttempts += attempts
 
       return {
-        caseId: case_._id,
+        caseId: case_._id as any,
         orderIndex: case_.orderIndex,
         customerName: case_.customerName,
         intro: case_.intro,
@@ -80,7 +80,7 @@ async function progressHandler() {
     const maxTotalStars = cases.length * 5
     const completionPercentage = maxTotalStars > 0 ? Math.round((totalStars / maxTotalStars) * 100) : 0
 
-  return {
+  const result = {
     cases: progressData,
     summary: {
       completedCount,
@@ -91,6 +91,11 @@ async function progressHandler() {
       totalCases: cases.length
     }
   }
+
+  return result
 }
 
 export const GET = apiHandler(progressHandler)
+
+// Add caching to improve performance
+export const revalidate = 30 // Revalidate every 30 seconds

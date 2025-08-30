@@ -11,11 +11,8 @@ import {
   Grid,
   Icon,
 } from '@chakra-ui/react'
-import { motion } from 'framer-motion'
 import { FiArrowRight, FiPlay } from 'react-icons/fi'
 import { useRouter } from 'next/navigation'
-
-const MotionBox = motion(Box)
 
 export default function Hero() {
   const router = useRouter()
@@ -30,54 +27,12 @@ export default function Hero() {
       position="relative"
       overflow="hidden"
     >
-      {/* Background Pattern */}
+      {/* Simplified Background - Static for better performance */}
       <Box
         position="absolute"
         inset="0"
-        opacity="0.05"
-        bgImage="/api/placeholder/100/100"
-        bgRepeat="repeat"
-        bgSize="50px 50px"
-      />
-      
-      {/* Floating Elements */}
-      <MotionBox
-        position="absolute"
-        top="20"
-        left="20"
-        w="32"
-        h="32"
-        bg="blue.200"
-        borderRadius="full"
-        opacity="0.2"
-        animate={{
-          scale: [1, 1.1, 1],
-          opacity: [0.2, 0.3, 0.2]
-        }}
-        transition={{
-          duration: 3,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
-      <MotionBox
-        position="absolute"
-        bottom="20"
-        right="20"
-        w="24"
-        h="24"
-        bg="blue.300"
-        borderRadius="full"
-        opacity="0.2"
-        animate={{
-          y: [0, -20, 0],
-          opacity: [0.2, 0.4, 0.2]
-        }}
-        transition={{
-          duration: 4,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
+        opacity="0.02"
+        bg="blue.100"
       />
       
       <Container maxW="6xl" px={6} textAlign="center" position="relative" zIndex={10}>

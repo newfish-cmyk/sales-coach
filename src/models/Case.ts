@@ -13,6 +13,7 @@ export interface ICase extends Document {
     points: string[]
     background: string
   }
+  script?: string
   createdAt: Date
 }
 
@@ -59,6 +60,10 @@ const CaseSchema: Schema = new Schema(
         type: String,
         required: true,
       },
+    },
+    script: {
+      type: String,
+      required: false,
     },
     createdAt: {
       type: Date,

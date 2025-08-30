@@ -1,5 +1,12 @@
 import { NextResponse } from 'next/server'
-import { ApiResponse } from './http'
+
+// Define ApiResponse interface locally since we removed the http module
+interface ApiResponse<T = any> {
+  code: number
+  message: string
+  data: T
+  success: boolean
+}
 
 // API响应缓存管理
 const cache = new Map<string, { data: any; timestamp: number; ttl: number }>()

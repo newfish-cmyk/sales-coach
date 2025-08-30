@@ -11,11 +11,8 @@ import {
   Flex,
 } from '@chakra-ui/react'
 import { FiArrowDown, FiCheckCircle } from 'react-icons/fi'
-import { motion } from 'framer-motion'
-
-const MotionBox = motion(Box)
 import { useRequest } from 'ahooks'
-import { getUserProgress } from '@/lib/api'
+// Remove unused import since we use axios directly now
 import { useAuth } from '@/contexts/AuthContext'
 import { UserHeader } from '@/components/list/UserHeader'
 import { OverlayLoading } from '@/components/OverlayLoading'
@@ -31,7 +28,13 @@ export default function ListPage() {
 
   // 使用ahooks获取进度数据，更稳定
   const { data: progressData, loading, error } = useRequest(
-    () => getUserProgress(),
+    async () => {
+      const response = await fetch('/api/progress', {
+        credentials: 'include' // Include cookies for authentication
+      })
+      if (!response.ok) throw new Error('Failed to fetch progress')
+      return response.json()
+    },
     {
       ready: !!user && !authLoading, // 等待用户认证完成
       cacheKey: 'user-progress',
@@ -42,8 +45,6 @@ export default function ListPage() {
     }
   )
   
-  // 如果用户未认证或正在加载认证状态，不显示数据
-  const shouldShowLoading = authLoading || (!user && !authLoading) || (user && loading)
   const shouldShowData = user && !authLoading && progressData
 
   useEffect(() => {
@@ -81,7 +82,7 @@ export default function ListPage() {
     )
   }
 
-  const { cases = [], summary = {} as ProgressSummary } = progressData || {}
+  const { cases = [], summary = {} as ProgressSummary } = progressData?.data || progressData || {}
 
   // 数据安全检查
   if (!Array.isArray(cases)) {
@@ -103,73 +104,12 @@ export default function ListPage() {
       position="relative" 
       overflow="hidden"
     >
-      {/* Background Pattern */}
+      {/* Simplified Background - Static for better performance */}
       <Box
         position="absolute"
         inset="0"
-        opacity="0.05"
-        bgImage="/api/placeholder/100/100"
-        bgRepeat="repeat"
-        bgSize="50px 50px"
-      />
-      
-      {/* Floating Elements */}
-      <MotionBox
-        position="absolute"
-        top="20"
-        left="20"
-        w="32"
-        h="32"
-        bg="blue.200"
-        borderRadius="full"
-        opacity="0.2"
-        animate={{
-          scale: [1, 1.1, 1],
-          opacity: [0.2, 0.3, 0.2]
-        }}
-        transition={{
-          duration: 3,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
-      <MotionBox
-        position="absolute"
-        bottom="20"
-        right="20"
-        w="24"
-        h="24"
-        bg="blue.300"
-        borderRadius="full"
-        opacity="0.2"
-        animate={{
-          y: [0, -20, 0],
-          opacity: [0.2, 0.4, 0.2]
-        }}
-        transition={{
-          duration: 4,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
-      <MotionBox
-        position="absolute"
-        top="40"
-        right="32"
-        w="16"
-        h="16"
-        bg="blue.400"
-        borderRadius="full"
-        opacity="0.15"
-        animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.15, 0.25, 0.15]
-        }}
-        transition={{
-          duration: 5,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
+        opacity="0.02"
+        bg="blue.100"
       />
 
       <UserHeader />

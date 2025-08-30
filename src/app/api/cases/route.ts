@@ -6,6 +6,7 @@ async function getCasesHandler() {
   await connectDB()
 
   const cases = await Case.find({})
+    .lean() // Use lean for better performance
     .sort({ orderIndex: 1 })
     .select('-__v')
 
@@ -13,3 +14,6 @@ async function getCasesHandler() {
 }
 
 export const GET = apiHandler(getCasesHandler)
+
+// Cache cases data for 5 minutes since it changes infrequently
+export const revalidate = 300

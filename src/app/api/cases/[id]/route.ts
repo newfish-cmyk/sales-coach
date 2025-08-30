@@ -10,7 +10,7 @@ async function getCaseHandler(
   const { id } = await params
   await connectDB()
 
-  const case_ = await Case.findById(id).select('-__v')
+  const case_ = await Case.findById(id).lean().select('-__v')
 
   if (!case_) {
     throw new Error('Case not found')
@@ -20,3 +20,6 @@ async function getCaseHandler(
 }
 
 export const GET = apiHandler(getCaseHandler)
+
+// Cache individual case data for 10 minutes
+export const revalidate = 600

@@ -18,6 +18,7 @@ export async function GET() {
         avatar: caseItem.avatar,
         orderIndex: caseItem.orderIndex,
         metaData: caseItem.metaData,
+        script: caseItem.script,
         createdAt: caseItem.createdAt
       }))
     })
@@ -47,7 +48,8 @@ export async function POST(request: NextRequest) {
         personality: data.metaData.personality,
         points: data.metaData.points,
         background: data.metaData.background
-      }
+      },
+      script: data.script
     })
 
     const savedCase = await newCase.save()
@@ -61,6 +63,7 @@ export async function POST(request: NextRequest) {
         avatar: savedCase.avatar,
         orderIndex: savedCase.orderIndex,
         metaData: savedCase.metaData,
+        script: savedCase.script,
         createdAt: savedCase.createdAt
       }
     }, { status: 201 })

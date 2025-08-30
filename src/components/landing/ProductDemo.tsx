@@ -12,15 +12,12 @@ import {
   Icon,
 } from '@chakra-ui/react'
 import { Progress } from '@chakra-ui/react'
-import { motion } from 'framer-motion'
 import { 
   FiX,
   FiCheckCircle,
   FiStar,
   FiTrendingUp
 } from 'react-icons/fi'
-
-const MotionBox = motion(Box)
 
 export default function ProductDemo() {
 
@@ -92,7 +89,7 @@ export default function ProductDemo() {
           {/* Right Demo */}
           <VStack gap={6}>
             {/* Training Progress Card */}
-            <MotionBox
+            <Box
               initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
@@ -150,10 +147,10 @@ export default function ProductDemo() {
                   </HStack>
                 </HStack>
               </Box>
-            </MotionBox>
+            </Box>
             
             {/* Achievement Card */}
-            <MotionBox
+            <Box
               initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
@@ -185,7 +182,7 @@ export default function ProductDemo() {
                   </Badge>
                 </HStack>
               </Box>
-            </MotionBox>
+            </Box>
           </VStack>
         </Grid>
       </Container>
