@@ -11,13 +11,15 @@ import {
   Flex,
 } from '@chakra-ui/react'
 import { FiArrowDown, FiCheckCircle } from 'react-icons/fi'
+import { motion } from 'framer-motion'
+
+const MotionBox = motion(Box)
 import { useRequest } from 'ahooks'
 import { getUserProgress } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { UserHeader } from '@/components/list/UserHeader'
 import { OverlayLoading } from '@/components/OverlayLoading'
-import { ListPageSkeleton, CaseCardSkeleton, ProgressOverviewSkeleton } from '@/components/SkeletonLoading'
-import { FadeTransition } from '@/components/FadeTransition'
+import { ProgressSummary } from '@/types'
 
 // 懒加载重型组件
 const ProgressOverview = lazy(() => import('@/components/list/ProgressOverview').then(module => ({ default: module.ProgressOverview })))
@@ -57,11 +59,6 @@ export default function ListPage() {
     }
   }
 
-  // 如果是初次加载或认证中，显示完整骨架屏
-  if (authLoading || (!user && !authLoading)) {
-    return <ListPageSkeleton />
-  }
-
   // 如果有错误且不是认证问题，显示错误
   if (error && user) {
     return (
@@ -79,13 +76,12 @@ export default function ListPage() {
   if (!shouldShowData) {
     return (
       <>
-        <ListPageSkeleton />
         <OverlayLoading isVisible={loading} message="正在加载数据..." />
       </>
     )
   }
 
-  const { cases = [], summary = {} } = progressData || {}
+  const { cases = [], summary = {} as ProgressSummary } = progressData || {}
 
   // 数据安全检查
   if (!Array.isArray(cases)) {
@@ -101,15 +97,87 @@ export default function ListPage() {
   }
 
   return (
-    <Box bg="white">
+    <Box 
+      minH="100vh" 
+      bg="blue.50" 
+      position="relative" 
+      overflow="hidden"
+    >
+      {/* Background Pattern */}
+      <Box
+        position="absolute"
+        inset="0"
+        opacity="0.05"
+        bgImage="/api/placeholder/100/100"
+        bgRepeat="repeat"
+        bgSize="50px 50px"
+      />
+      
+      {/* Floating Elements */}
+      <MotionBox
+        position="absolute"
+        top="20"
+        left="20"
+        w="32"
+        h="32"
+        bg="blue.200"
+        borderRadius="full"
+        opacity="0.2"
+        animate={{
+          scale: [1, 1.1, 1],
+          opacity: [0.2, 0.3, 0.2]
+        }}
+        transition={{
+          duration: 3,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
+      <MotionBox
+        position="absolute"
+        bottom="20"
+        right="20"
+        w="24"
+        h="24"
+        bg="blue.300"
+        borderRadius="full"
+        opacity="0.2"
+        animate={{
+          y: [0, -20, 0],
+          opacity: [0.2, 0.4, 0.2]
+        }}
+        transition={{
+          duration: 4,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
+      <MotionBox
+        position="absolute"
+        top="40"
+        right="32"
+        w="16"
+        h="16"
+        bg="blue.400"
+        borderRadius="full"
+        opacity="0.15"
+        animate={{
+          scale: [1, 1.2, 1],
+          opacity: [0.15, 0.25, 0.15]
+        }}
+        transition={{
+          duration: 5,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
+
       <UserHeader />
       
-      <Container maxW="container.xl" py={8}>
+      <Container maxW="container.xl" py={8} position="relative" zIndex={10}>
         {/* Header Section */}
         <VStack textAlign="center" mb={8} gap={4}>
-          <Suspense fallback={<ProgressOverviewSkeleton />}>
             <ProgressOverview summary={summary} />
-          </Suspense>
         </VStack>
 
         {/* Roadmap */}
@@ -128,12 +196,7 @@ export default function ListPage() {
 
           <VStack gap={8}>
             {cases.map((case_, index) => (
-              <FadeTransition 
-                key={case_.caseId} 
-                isVisible={true}
-                delay={index * 0.1} // 每个卡片延迟0.1秒显示
-              >
-                <Box position="relative" w="full">
+                <Box position="relative" w="full" key={case_.caseId}>
                   {/* Path Node */}
                   <Box
                     position="absolute"
@@ -164,9 +227,7 @@ export default function ListPage() {
                     )}
                   </Box>
 
-                  <Suspense fallback={<CaseCardSkeleton />}>
                     <CaseCard case_={case_} index={index} onClick={handleItemClick} />
-                  </Suspense>
 
                   {/* Arrow for mobile */}
                   {index < cases.length - 1 && (
@@ -175,7 +236,6 @@ export default function ListPage() {
                     </Flex>
                   )}
                 </Box>
-              </FadeTransition>
             ))}
           </VStack>
         </Box>

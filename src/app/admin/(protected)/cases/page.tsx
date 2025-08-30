@@ -18,8 +18,12 @@ import {
   SimpleGrid,
   Field,
   Tag,
-  Avatar
+  Avatar,
+  Container
 } from '@chakra-ui/react'
+import { motion } from 'framer-motion'
+
+const MotionBox = motion(Box)
 
 interface CaseData {
   id: string
@@ -207,264 +211,194 @@ export default function CasesManagePage() {
     }))
   }
 
-  if (loading) {
-    return (
-      <VStack align="center" justify="center" minH="400px">
-        <Text>加载中...</Text>
-      </VStack>
-    )
-  }
 
   return (
-    <VStack align="stretch" gap={6}>
-      <HStack justify="space-between">
-        <Box>
-          <Heading size="lg" mb={2}>
-            案例管理
-          </Heading>
-          <Text color="gray.600">
-            管理销售训练案例，支持增删改查操作
-          </Text>
-        </Box>
-        <Button colorScheme="blue" onClick={handleCreate}>
-          新增案例
-        </Button>
-      </HStack>
+    <Box
+      minH="100vh"
+      bg="blue.50"
+      position="relative"
+      overflow="hidden"
+    >
+      {/* Background Pattern */}
+      <Box
+        position="absolute"
+        inset="0"
+        opacity="0.05"
+        bgImage="/api/placeholder/100/100"
+        bgRepeat="repeat"
+        bgSize="50px 50px"
+      />
+      
+      {/* Floating Elements */}
+      <MotionBox
+        position="absolute"
+        top="20"
+        left="20"
+        w="32"
+        h="32"
+        bg="blue.200"
+        borderRadius="full"
+        opacity="0.2"
+        animate={{
+          scale: [1, 1.1, 1],
+          opacity: [0.2, 0.3, 0.2]
+        }}
+        transition={{
+          duration: 3,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
+      <MotionBox
+        position="absolute"
+        bottom="20"
+        right="20"
+        w="24"
+        h="24"
+        bg="blue.300"
+        borderRadius="full"
+        opacity="0.2"
+        animate={{
+          y: [0, -20, 0],
+          opacity: [0.2, 0.4, 0.2]
+        }}
+        transition={{
+          duration: 4,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
+      <MotionBox
+        position="absolute"
+        top="40"
+        right="32"
+        w="16"
+        h="16"
+        bg="blue.400"
+        borderRadius="full"
+        opacity="0.15"
+        animate={{
+          scale: [1, 1.2, 1],
+          opacity: [0.15, 0.25, 0.15]
+        }}
+        transition={{
+          duration: 5,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
 
-      {/* Cases Table */}
-      <Card.Root>
-        <Card.Body>
-          {cases.length === 0 ? (
-            <VStack py={8}>
-              <Text color="gray.500">暂无案例数据</Text>
-              <Button colorScheme="blue" onClick={handleCreate}>
-                创建第一个案例
-              </Button>
-            </VStack>
-          ) : (
-            <Table.Root size="sm">
-              <Table.Header>
-                <Table.Row>
-                  <Table.ColumnHeader>排序</Table.ColumnHeader>
-                  <Table.ColumnHeader>客户</Table.ColumnHeader>
-                  <Table.ColumnHeader>介绍</Table.ColumnHeader>
-                  <Table.ColumnHeader>预算</Table.ColumnHeader>
-                  <Table.ColumnHeader>决策级别</Table.ColumnHeader>
-                  <Table.ColumnHeader>性格标签</Table.ColumnHeader>
-                  <Table.ColumnHeader>操作</Table.ColumnHeader>
-                </Table.Row>
-              </Table.Header>
-              <Table.Body>
-                {cases.map((caseData) => (
-                  <Table.Row key={caseData.id}>
-                    <Table.Cell>
-                      <Badge colorScheme="blue" variant="subtle">
-                        {caseData.orderIndex}
-                      </Badge>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <HStack>
-                        <Avatar.Root >
-                          <Avatar.Image src={caseData.avatar} />
-                          <Avatar.Fallback>
-                            {caseData.customerName.charAt(0)}
-                          </Avatar.Fallback>
-                        </Avatar.Root>
-                        <Text fontWeight="medium">{caseData.customerName}</Text>
-                      </HStack>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <Text fontSize="sm" maxW="200px">
-                        {caseData.intro}
-                      </Text>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <Text fontSize="sm">{caseData.metaData.budget}</Text>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <Text fontSize="sm">{caseData.metaData.decision_level}</Text>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <HStack flexWrap="wrap" gap={1}>
-                        {caseData.metaData.personality.slice(0, 2).map((trait, index) => (
-                          <Tag.Root key={index} size="sm" colorScheme="purple" variant="subtle">
-                            {trait}
-                          </Tag.Root>
-                        ))}
-                        {caseData.metaData.personality.length > 2 && (
-                          <Tag.Root size="sm" variant="subtle">
-                            +{caseData.metaData.personality.length - 2}
-                          </Tag.Root>
-                        )}
-                      </HStack>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <HStack gap={1}>
-                        <IconButton
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleEdit(caseData)}
-                        >
-                          ✏️
-                        </IconButton>
-                        <IconButton
-                          size="sm"
-                          variant="ghost"
-                          colorScheme="red"
-                          onClick={() => handleDelete(caseData.id)}
-                        >
-                          🗑️
-                        </IconButton>
-                      </HStack>
-                    </Table.Cell>
-                  </Table.Row>
-                ))}
-              </Table.Body>
-            </Table.Root>
-          )}
-        </Card.Body>
-      </Card.Root>
+      <Container maxW="6xl" py={8} position="relative" zIndex={10}>
+        <VStack align="stretch" gap={6}>
+          <HStack justify="space-between">
+            <Box>
+              <Heading size="lg" mb={2} color="gray.900">
+                案例管理
+              </Heading>
+              <Text color="gray.600">
+                管理销售训练案例，支持增删改查操作
+              </Text>
+            </Box>
+            <Button colorScheme="blue" onClick={handleCreate}>
+              新增案例
+            </Button>
+          </HStack>
 
-      {/* Edit/Create Modal */}
-      {/* <Modal.Root open={isModalOpen} onOpenChange={(e) => setIsModalOpen(e.open)} size="xl">
-        <Modal.Backdrop />
-        <Modal.Content>
-          <Modal.Header>
-            <Modal.Title>
-              {editingCase ? '编辑案例' : '新增案例'}
-            </Modal.Title>
-          </Modal.Header>
-          
-          <Modal.Body>
-            <VStack gap={4}>
-              <SimpleGrid columns={2} gap={4} w="full">
-                <Field.Root invalid={!!errors.customerName}>
-                  <Field.Label>客户名称</Field.Label>
-                  <Input
-                    value={formData.customerName}
-                    onChange={(e) => setFormData(prev => ({ ...prev, customerName: e.target.value }))}
-                    placeholder="请输入客户名称"
-                  />
-                  {errors.customerName && <Field.ErrorText>{errors.customerName}</Field.ErrorText>}
-                </Field.Root>
-
-                <Field.Root invalid={!!errors.orderIndex}>
-                  <Field.Label>排序</Field.Label>
-                  <Input
-                    type="number"
-                    value={formData.orderIndex}
-                    onChange={(e) => setFormData(prev => ({ ...prev, orderIndex: parseInt(e.target.value) || 1 }))}
-                    placeholder="排序号"
-                  />
-                  {errors.orderIndex && <Field.ErrorText>{errors.orderIndex}</Field.ErrorText>}
-                </Field.Root>
-              </SimpleGrid>
-
-              <Field.Root invalid={!!errors.avatar} w="full">
-                <Field.Label>头像链接</Field.Label>
-                <Input
-                  value={formData.avatar}
-                  onChange={(e) => setFormData(prev => ({ ...prev, avatar: e.target.value }))}
-                  placeholder="请输入头像链接"
-                />
-                {errors.avatar && <Field.ErrorText>{errors.avatar}</Field.ErrorText>}
-              </Field.Root>
-
-              <Field.Root invalid={!!errors.intro} w="full">
-                <Field.Label>介绍</Field.Label>
-                <Textarea
-                  value={formData.intro}
-                  onChange={(e) => setFormData(prev => ({ ...prev, intro: e.target.value }))}
-                  placeholder="请输入客户介绍"
-                  rows={3}
-                />
-                {errors.intro && <Field.ErrorText>{errors.intro}</Field.ErrorText>}
-              </Field.Root>
-
-              <SimpleGrid columns={2} gap={4} w="full">
-                <Field.Root invalid={!!errors.budget}>
-                  <Field.Label>预算</Field.Label>
-                  <Input
-                    value={formData.metaData.budget}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      metaData: { ...prev.metaData, budget: e.target.value }
-                    }))}
-                    placeholder="如：10-50万"
-                  />
-                  {errors.budget && <Field.ErrorText>{errors.budget}</Field.ErrorText>}
-                </Field.Root>
-
-                <Field.Root invalid={!!errors.decision_level}>
-                  <Field.Label>决策级别</Field.Label>
-                  <Input
-                    value={formData.metaData.decision_level}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      metaData: { ...prev.metaData, decision_level: e.target.value }
-                    }))}
-                    placeholder="如：部门经理"
-                  />
-                  {errors.decision_level && <Field.ErrorText>{errors.decision_level}</Field.ErrorText>}
-                </Field.Root>
-              </SimpleGrid>
-
-              <Field.Root w="full">
-                <Field.Label>性格特征</Field.Label>
-                <Input
-                  value={formData.metaData.personality.join(', ')}
-                  onChange={(e) => handleArrayInput('personality', e.target.value)}
-                  placeholder="用逗号分隔，如：友好，谨慎，专业"
-                />
-                <Field.HelperText>
-                  多个特征用逗号分隔
-                </Field.HelperText>
-              </Field.Root>
-
-              <Field.Root w="full">
-                <Field.Label>挑战要点</Field.Label>
-                <Input
-                  value={formData.metaData.points.join(', ')}
-                  onChange={(e) => handleArrayInput('points', e.target.value)}
-                  placeholder="用逗号分隔，如：价格敏感，需求不明确"
-                />
-                <Field.HelperText>
-                  多个要点用逗号分隔
-                </Field.HelperText>
-              </Field.Root>
-
-              <Field.Root invalid={!!errors.background} w="full">
-                <Field.Label>背景信息</Field.Label>
-                <Textarea
-                  value={formData.metaData.background}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    metaData: { ...prev.metaData, background: e.target.value }
-                  }))}
-                  placeholder="请输入客户背景信息"
-                  rows={4}
-                />
-                {errors.background && <Field.ErrorText>{errors.background}</Field.ErrorText>}
-              </Field.Root>
-            </VStack>
-          </Modal.Body>
-
-          <Modal.Footer>
-            <HStack gap={3}>
-              <Button variant="ghost" onClick={() => setIsModalOpen(false)}>
-                取消
-              </Button>
-              <Button
-                colorScheme="blue"
-                onClick={handleSubmit}
-                loading={isSubmitting}
-              >
-                {editingCase ? '更新' : '创建'}
-              </Button>
-            </HStack>
-          </Modal.Footer>
-        </Modal.Content>
-      </Modal.Root> */}
-    </VStack>
+          {/* Cases Table */}
+          <Card.Root bg="white" shadow="lg" borderRadius="xl">
+            <Card.Body>
+              {cases.length === 0 ? (
+                <VStack py={8}>
+                  <Text color="gray.500">暂无案例数据</Text>
+                  <Button colorScheme="blue" onClick={handleCreate}>
+                    创建第一个案例
+                  </Button>
+                </VStack>
+              ) : (
+                <Table.Root size="sm">
+                  <Table.Header>
+                    <Table.Row>
+                      <Table.ColumnHeader>排序</Table.ColumnHeader>
+                      <Table.ColumnHeader>客户</Table.ColumnHeader>
+                      <Table.ColumnHeader>介绍</Table.ColumnHeader>
+                      <Table.ColumnHeader>预算</Table.ColumnHeader>
+                      <Table.ColumnHeader>决策级别</Table.ColumnHeader>
+                      <Table.ColumnHeader>性格标签</Table.ColumnHeader>
+                      <Table.ColumnHeader>操作</Table.ColumnHeader>
+                    </Table.Row>
+                  </Table.Header>
+                  <Table.Body>
+                    {cases.map((caseData) => (
+                      <Table.Row key={caseData.id}>
+                        <Table.Cell>
+                          <Badge colorScheme="blue" variant="subtle">
+                            {caseData.orderIndex}
+                          </Badge>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <HStack>
+                            <Avatar.Root >
+                              <Avatar.Image src={caseData.avatar} />
+                              <Avatar.Fallback>
+                                {caseData.customerName.charAt(0)}
+                              </Avatar.Fallback>
+                            </Avatar.Root>
+                            <Text fontWeight="medium">{caseData.customerName}</Text>
+                          </HStack>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Text fontSize="sm" maxW="200px">
+                            {caseData.intro}
+                          </Text>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Text fontSize="sm">{caseData.metaData.budget}</Text>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Text fontSize="sm">{caseData.metaData.decision_level}</Text>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <HStack flexWrap="wrap" gap={1}>
+                            {caseData.metaData.personality.slice(0, 2).map((trait, index) => (
+                              <Tag.Root key={index} size="sm" colorScheme="purple" variant="subtle">
+                                {trait}
+                              </Tag.Root>
+                            ))}
+                            {caseData.metaData.personality.length > 2 && (
+                              <Tag.Root size="sm" variant="subtle">
+                                +{caseData.metaData.personality.length - 2}
+                              </Tag.Root>
+                            )}
+                          </HStack>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <HStack gap={1}>
+                            <IconButton
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleEdit(caseData)}
+                            >
+                              ✏️
+                            </IconButton>
+                            <IconButton
+                              size="sm"
+                              variant="ghost"
+                              colorScheme="red"
+                              onClick={() => handleDelete(caseData.id)}
+                            >
+                              🗑️
+                            </IconButton>
+                          </HStack>
+                        </Table.Cell>
+                      </Table.Row>
+                    ))}
+                  </Table.Body>
+                </Table.Root>
+              )}
+            </Card.Body>
+          </Card.Root>
+        </VStack>
+      </Container>
+    </Box>
   )
 }

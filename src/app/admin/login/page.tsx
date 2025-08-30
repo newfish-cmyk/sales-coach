@@ -16,6 +16,9 @@ import {
 } from '@chakra-ui/react'
 import NextLink from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
+import { motion } from 'framer-motion'
+
+const MotionBox = motion(Box)
 
 export default function AdminLoginPage() {
   const router = useRouter()
@@ -108,9 +111,85 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <Box minH="100vh" py={20} px={4} bg="gray.900">
-      <Container maxW="md">
-        <Box bg="white" borderRadius="lg" borderWidth="1px" borderColor="gray.700" p={8}>
+    <Box 
+      minH="100vh" 
+      py={20} 
+      px={4} 
+      bg="blue.50" 
+      position="relative" 
+      overflow="hidden"
+    >
+      {/* Background Pattern */}
+      <Box
+        position="absolute"
+        inset="0"
+        opacity="0.05"
+        bgImage="/api/placeholder/100/100"
+        bgRepeat="repeat"
+        bgSize="50px 50px"
+      />
+      
+      {/* Floating Elements */}
+      <MotionBox
+        position="absolute"
+        top="20"
+        left="20"
+        w="32"
+        h="32"
+        bg="blue.200"
+        borderRadius="full"
+        opacity="0.2"
+        animate={{
+          scale: [1, 1.1, 1],
+          opacity: [0.2, 0.3, 0.2]
+        }}
+        transition={{
+          duration: 3,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
+      <MotionBox
+        position="absolute"
+        bottom="20"
+        right="20"
+        w="24"
+        h="24"
+        bg="blue.300"
+        borderRadius="full"
+        opacity="0.2"
+        animate={{
+          y: [0, -20, 0],
+          opacity: [0.2, 0.4, 0.2]
+        }}
+        transition={{
+          duration: 4,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
+      <MotionBox
+        position="absolute"
+        top="40"
+        right="32"
+        w="16"
+        h="16"
+        bg="blue.400"
+        borderRadius="full"
+        opacity="0.15"
+        animate={{
+          scale: [1, 1.2, 1],
+          opacity: [0.15, 0.25, 0.15]
+        }}
+        transition={{
+          duration: 5,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
+
+      <Container maxW="md" position="relative" zIndex={10}>
+        <Box bg="white" borderRadius="xl" borderWidth="1px" borderColor="gray.200" p={8} shadow="lg">
           <VStack gap={6}>
             <VStack textAlign="center" gap={2}>
               <Heading size="xl" color="gray.900">
