@@ -38,3 +38,43 @@ export interface ChatResult {
   totalAttempts: number
   bestScore: number
 }
+
+export interface CaseProgress {
+  isCompleted: boolean
+  bestStars: number
+  bestScore: number
+  totalAttempts: number
+  firstCompletedAt: Date | null
+  lastAttemptAt: Date | null
+}
+
+export interface CaseWithProgress {
+  caseId: string
+  orderIndex: number
+  customerName: string
+  intro: string
+  avatar: string
+  metaData: {
+    budget: string
+    decision_level: string
+    personality: string[]
+    points: string[]
+    background: string
+  }
+  progress: CaseProgress
+  isLocked: boolean
+}
+
+export interface ProgressSummary {
+  completedCount: number
+  totalStars: number
+  maxTotalStars: number
+  completionPercentage: number
+  totalAttempts: number
+  totalCases: number
+}
+
+export interface UserProgressData {
+  cases: CaseWithProgress[]
+  summary: ProgressSummary
+}

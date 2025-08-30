@@ -1,4 +1,4 @@
-import { Case, ChatMessage, ChatResult } from '@/types'
+import { Case, ChatMessage, ChatResult, UserProgressData } from '@/types'
 
 interface ChatResponse {
   success: boolean
@@ -62,6 +62,20 @@ export async function sendChatMessage(
     return data
   } catch (error) {
     console.error('Error sending chat message:', error)
+    return null
+  }
+}
+
+export async function getUserProgress(): Promise<UserProgressData | null> {
+  try {
+    const response = await fetch('/api/progress')
+    if (!response.ok) {
+      throw new Error('Failed to fetch user progress')
+    }
+    const data = await response.json()
+    return data.success ? data.data : null
+  } catch (error) {
+    console.error('Error fetching user progress:', error)
     return null
   }
 }

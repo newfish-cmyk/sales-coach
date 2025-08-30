@@ -26,12 +26,12 @@ import {
   FiUser,
   FiLogOut
 } from 'react-icons/fi'
-import { getCases } from '@/lib/data'
-import { Case } from '@/types'
+import { getUserProgress } from '@/lib/data'
+import { CaseWithProgress, UserProgressData } from '@/types'
 import { useAuth } from '@/hooks/useAuth'
 
 export default function ListPage() {
-  const [items, setItems] = useState<Case[]>([])
+  const [progressData, setProgressData] = useState<UserProgressData | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   const { user, logout, loading: authLoading } = useAuth()
@@ -46,19 +46,19 @@ export default function ListPage() {
       return
     }
 
-    // 如果有用户，加载数据
-    const loadItems = async () => {
+    // 如果有用户，加载进度数据
+    const loadProgress = async () => {
       try {
-        const data = await getCases()
-        setItems(data)
+        const data = await getUserProgress()
+        setProgressData(data)
       } catch (error) {
-        console.error('Failed to load cases:', error)
+        console.error('Failed to load progress:', error)
       } finally {
         setLoading(false)
       }
     }
 
-    loadItems()
+    loadProgress()
   }, [user, authLoading, router])
 
   const handleItemClick = (caseId: string, isLocked: boolean) => {
@@ -66,6 +66,21 @@ export default function ListPage() {
       router.push(`/detail/${caseId}`)
     }
   }
+
+  if (!progressData) {
+    return (
+      <Box minH="100vh" bg="gray.50">
+        <Container maxW="container.xl" py={8}>
+          <VStack gap={4} justify="center" minH="50vh">
+            <Spinner size="xl" />
+            <Text>加载中...</Text>
+          </VStack>
+        </Container>
+      </Box>
+    )
+  }
+
+  const { cases, summary } = progressData
 
   if (loading) {
     return (
@@ -80,15 +95,6 @@ export default function ListPage() {
     )
   }
 
-  // 临时硬编码进度数据，后续从progress表获取
-  const completedCount = 2 // 临时设置前2关已完成
-  const totalStars = 8     // 临时设置总星数
-  const maxTotalStars = items.length * 5 // 每关最多5星
-  const completionPercentage = maxTotalStars > 0 ? Math.round((totalStars / maxTotalStars) * 100) : 0
-
-  // 临时的锁定逻辑：前3关解锁，后面锁定
-  const isLocked = (orderIndex: number) => orderIndex > 3
-  const isCompleted = (orderIndex: number) => orderIndex <= 2
 
   const StarRating = ({ stars, maxStars }: { stars: number; maxStars: number }) => {
     return (
@@ -202,10 +208,10 @@ export default function ListPage() {
                 <Flex align="center" justify="center" mb={2}>
                   <Icon as={FiAward} w={6} h={6} color="blue.600" mr={2} />
                   <Text fontSize="2xl" fontWeight="bold" color="blue.900">
-                    {completedCount}
+                    {summary.completedCount}
                   </Text>
                   <Text color="blue.600" ml={1}>
-                    / {items.length}
+                    / {summary.totalCases}
                   </Text>
                 </Flex>
                 <Text fontSize="sm" color="blue.700">完成关卡</Text>
@@ -214,17 +220,17 @@ export default function ListPage() {
                 <Flex align="center" justify="center" mb={2}>
                   <Icon as={FiStar} w={6} h={6} color="yellow.400" fill="yellow.400" mr={2} />
                   <Text fontSize="2xl" fontWeight="bold" color="blue.900">
-                    {totalStars}
+                    {summary.totalStars}
                   </Text>
                   <Text color="blue.600" ml={1}>
-                    / {maxTotalStars}
+                    / {summary.maxTotalStars}
                   </Text>
                 </Flex>
                 <Text fontSize="sm" color="blue.700">获得星星</Text>
               </VStack>
               <VStack textAlign="center">
                 <Text fontSize="2xl" fontWeight="bold" color="blue.900" mb={2}>
-                  {completionPercentage}%
+                  {summary.completionPercentage}%
                 </Text>
                 <Text fontSize="sm" color="blue.700">完成度</Text>
               </VStack>
@@ -247,8 +253,8 @@ export default function ListPage() {
           />
 
           <VStack gap={8}>
-            {items.map((case_, index) => (
-              <Box key={case_._id} position="relative" w="full">
+            {cases.map((case_, index) => (
+              <Box key={case_.caseId} position="relative" w="full">
                 {/* Path Node */}
                 <Box
                   position="absolute"
@@ -264,7 +270,7 @@ export default function ListPage() {
                   zIndex={10}
                   display={{ base: 'none', lg: 'block' }}
                 >
-                  {isCompleted(case_.orderIndex) && (
+                  {case_.progress.isCompleted && (
                     <Box
                       position="absolute"
                       inset="0"
@@ -302,18 +308,18 @@ export default function ListPage() {
                     maxW="xl"
                     borderRadius="lg"
                     borderWidth="1px"
-                    borderColor={isCompleted(case_.orderIndex) ? "blue.400" : "blue.200"}
+                    borderColor={case_.progress.isCompleted ? "blue.400" : "blue.200"}
                     shadow="lg"
-                    cursor={isLocked(case_.orderIndex) ? "not-allowed" : "pointer"}
-                    opacity={isLocked(case_.orderIndex) ? 0.6 : 1}
+                    cursor={case_.isLocked ? "not-allowed" : "pointer"}
+                    opacity={case_.isLocked ? 0.6 : 1}
                     transition="all 0.3s"
-                    _hover={!isLocked(case_.orderIndex) ? {
+                    _hover={!case_.isLocked ? {
                       shadow: "xl",
                       transform: "scale(1.05) translateY(-4px)"
                     } : {}}
-                    onClick={() => handleItemClick(case_._id, isLocked(case_.orderIndex))}
-                    bg={isCompleted(case_.orderIndex) ? "blue.50" : "white"}
-                    {...(isCompleted(case_.orderIndex) && {
+                    onClick={() => handleItemClick(case_.caseId, case_.isLocked)}
+                    bg={case_.progress.isCompleted ? "blue.50" : "white"}
+                    {...(case_.progress.isCompleted && {
                       ring: 2,
                       ringColor: "blue.400"
                     })}
@@ -347,7 +353,7 @@ export default function ListPage() {
                                 </Text>
                               )}
                             </Box>
-                            {isCompleted(case_.orderIndex) && (
+                            {case_.progress.isCompleted && (
                               <Box
                                 position="absolute"
                                 top="-1"
@@ -364,7 +370,7 @@ export default function ListPage() {
                                 <Icon as={FiCheckCircle} w={3} h={3} color="white" />
                               </Box>
                             )}
-                            {isLocked(case_.orderIndex) && (
+                            {case_.isLocked && (
                               <Box
                                 position="absolute"
                                 top="-1"
@@ -407,21 +413,28 @@ export default function ListPage() {
                             评级
                           </Text>
                           <Flex align="center" gap={2}>
-                            <StarRating stars={isCompleted(case_.orderIndex) ? 4 : 0} maxStars={5} />
+                            <StarRating stars={case_.progress.bestStars} maxStars={5} />
                             <Text fontSize="sm" color="blue.600">
-                              {isCompleted(case_.orderIndex) ? 4 : 0}/5
+                              {case_.progress.bestStars}/5
                             </Text>
                           </Flex>
                         </Flex>
 
-                        {isCompleted(case_.orderIndex) && (
-                          <Flex align="center" color="blue.600" fontSize="sm" fontWeight="medium">
-                            <Icon as={FiCheckCircle} w={4} h={4} mr={1} />
-                            已完成
+                        {case_.progress.isCompleted && (
+                          <Flex justify="space-between" align="center">
+                            <Flex align="center" color="blue.600" fontSize="sm" fontWeight="medium">
+                              <Icon as={FiCheckCircle} w={4} h={4} mr={1} />
+                              已完成
+                            </Flex>
+                            {case_.progress.totalAttempts > 0 && (
+                              <Text fontSize="xs" color="blue.500">
+                                尝试次数: {case_.progress.totalAttempts}
+                              </Text>
+                            )}
                           </Flex>
                         )}
 
-                        {isLocked(case_.orderIndex) && (
+                        {case_.isLocked && (
                           <Flex align="center" color="blue.400" fontSize="sm">
                             <Icon as={FiLock} w={4} h={4} mr={1} />
                             需要完成前置关卡
@@ -433,7 +446,7 @@ export default function ListPage() {
                 </Box>
 
                 {/* Arrow for mobile */}
-                {index < items.length - 1 && (
+                {index < cases.length - 1 && (
                   <Flex justify="center" mt={4} display={{ base: 'flex', lg: 'none' }}>
                     <Icon as={FiArrowDown} w={6} h={6} color="blue.400" />
                   </Flex>
