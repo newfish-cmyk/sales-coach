@@ -29,15 +29,9 @@ import {
   FiMicOff,
   FiSend
 } from 'react-icons/fi'
-import { getCase } from '@/lib/data'
-import { Case } from '@/types'
+import { getCase, sendChatMessage } from '@/lib/data'
+import { Case, ChatMessage, ChatResult } from '@/types'
 
-interface Message {
-  id: number
-  sender: 'user' | 'customer'
-  content: string
-  timestamp: string
-}
 
 interface CustomerProfile {
   id: string
@@ -59,11 +53,12 @@ export default function DetailPage() {
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
   
-  const [messages, setMessages] = useState<Message[]>([
-
-  ])
+  const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isRecording, setIsRecording] = useState(false)
   const [inputText, setInputText] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const [isComplete, setIsComplete] = useState(false)
+  const [chatResult, setChatResult] = useState<ChatResult | null>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -80,19 +75,38 @@ export default function DetailPage() {
     console.log("停止录音")
   }
 
-  const handleSendMessage = () => {
-    if (!inputText.trim()) return
+  const handleSendMessage = async () => {
+    if (!inputText.trim() || isLoading || isComplete) return
 
-    const newMessage: Message = {
-      id: messages.length + 1,
-      sender: "user",
-      content: inputText,
-      timestamp: new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }),
-    }
-
-    setMessages([...messages, newMessage])
+    setIsLoading(true)
+    const messageContent = inputText.trim()
     setInputText("")
-    
+
+    try {
+      const data = await sendChatMessage(params.id as string, messageContent, messages)
+      
+      if (data && data.success) {
+        setMessages(data.conversationHistory)
+        
+        if (data.isComplete) {
+          setIsComplete(true)
+          setChatResult(data.result)
+        }
+      } else {
+        console.error('Failed to send message')
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleRestart = () => {
+    setMessages([])
+    setIsComplete(false)
+    setChatResult(null)
+    setInputText('')
   }
 
   // 扩展的客户档案数据
@@ -359,10 +373,18 @@ export default function DetailPage() {
               {/* 对话内容 */}
               <Box flex={1} overflowY="auto" p={6}>
                 <VStack gap={4} align="stretch">
-                  {messages.map((message) => (
+                  {messages.length === 0 && !isComplete && (
+                    <Box textAlign="center" py={8}>
+                      <Text color="blue.600" fontSize="sm">
+                        开始与 {customer.name} 的销售对练吧！
+                      </Text>
+                    </Box>
+                  )}
+                  
+                  {messages.map((message, index) => (
                     <Flex
-                      key={message.id}
-                      justify={message.sender === 'user' ? 'flex-end' : 'flex-start'}
+                      key={index}
+                      justify={message.role === 'user' ? 'flex-end' : 'flex-start'}
                     >
                       <Box
                         maxW="70%"
@@ -370,16 +392,16 @@ export default function DetailPage() {
                         px={4}
                         py={3}
                         bg={
-                          message.sender === 'user'
+                          message.role === 'user'
                             ? 'blue.600'
                             : 'blue.50'
                         }
                         color={
-                          message.sender === 'user'
+                          message.role === 'user'
                             ? 'white'
                             : 'blue.900'
                         }
-                        borderWidth={message.sender === 'customer' ? '1px' : '0'}
+                        borderWidth={message.role === 'assistant' ? '1px' : '0'}
                         borderColor="blue.200"
                       >
                         <Text fontSize="sm" lineHeight="relaxed">
@@ -390,62 +412,161 @@ export default function DetailPage() {
                           mt={2}
                           fontSize="xs"
                           color={
-                            message.sender === 'user'
+                            message.role === 'user'
                               ? 'blue.100'
                               : 'blue.600'
                           }
                         >
                           <Icon as={FiClock} w={3} h={3} mr={1} />
-                          {message.timestamp}
+                          {new Date(message.timestamp).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}
                         </Flex>
                       </Box>
                     </Flex>
                   ))}
+                  
+                  {isLoading && (
+                    <Flex justify="flex-start">
+                      <Box
+                        maxW="70%"
+                        borderRadius="lg"
+                        px={4}
+                        py={3}
+                        bg="blue.50"
+                        color="blue.900"
+                        borderWidth="1px"
+                        borderColor="blue.200"
+                      >
+                        <Flex align="center" gap={2}>
+                          <Spinner size="sm" color="blue.600" />
+                          <Text fontSize="sm">正在回复...</Text>
+                        </Flex>
+                      </Box>
+                    </Flex>
+                  )}
                 </VStack>
               </Box>
 
-              {/* 输入区域 */}
+              {/* 输入区域或结果展示 */}
               <Box
                 borderTopWidth="1px"
                 borderColor="blue.100"
                 p={4}
                 flexShrink={0}
               >
-                <VStack gap={3}>
-                  <Textarea
-                    value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
-                    placeholder="输入您的回复或点击麦克风使用语音输入..."
-                    minH="80px"
-                    borderColor="blue.200"
-                    _focus={{ borderColor: 'blue.400', boxShadow: '0 0 0 1px #3182CE' }}
-                    bg="white"
-                  />
-                  <HStack gap={2} w="full">
-                    <Button
-                      onClick={isRecording ? handleStopRecording : handleStartRecording}
-                      variant="outline"
-                      borderColor="blue.300"
-                      color={isRecording ? "red.600" : "blue.600"}
-                      bg={isRecording ? "red.50" : "white"}
-                      _hover={{ bg: isRecording ? "red.100" : "blue.50" }}
+                {isComplete && chatResult ? (
+                  // 显示评分结果
+                  <VStack gap={4} align="stretch">
+                    <Box textAlign="center">
+                      <Heading size="md" color="blue.900" mb={2}>
+                        🎉 对练完成！
+                      </Heading>
+                      <HStack justify="center" gap={1} mb={2}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Text
+                            key={star}
+                            fontSize="2xl"
+                            color={star <= chatResult.stars ? 'yellow.400' : 'gray.200'}
+                          >
+                            ⭐
+                          </Text>
+                        ))}
+                      </HStack>
+                      <Text fontSize="xl" fontWeight="bold" color="blue.700">
+                        得分：{chatResult.score} 分
+                      </Text>
+                      <Text fontSize="sm" color="blue.600">
+                        本关卡尝试次数：{chatResult.totalAttempts} | 最高分：{chatResult.bestScore}
+                      </Text>
+                    </Box>
+                    
+                    <Box
+                      bg="blue.50"
+                      borderRadius="md"
+                      p={4}
+                      borderWidth="1px"
+                      borderColor="blue.200"
                     >
-                      <Icon as={isRecording ? FiMicOff : FiMic} w={4} h={4} mr={2} />
-                      {isRecording ? "停止录音" : "语音输入"}
-                    </Button>
-                    <Button
-                      onClick={handleSendMessage}
-                      colorScheme="blue"
-                      bg="blue.600"
-                      _hover={{ bg: 'blue.700' }}
-                      _disabled={{ bg: 'gray.300', cursor: 'not-allowed' }}
-                      flex={1}
-                    >
-                      <Icon as={FiSend} w={4} h={4} mr={2} />
-                      发送
-                    </Button>
-                  </HStack>
-                </VStack>
+                      <Text fontSize="sm" color="blue.800" lineHeight="relaxed" whiteSpace="pre-line">
+                        {chatResult.report}
+                      </Text>
+                    </Box>
+                    
+                    <HStack gap={2}>
+                      <Button
+                        onClick={handleRestart}
+                        colorScheme="blue"
+                        bg="blue.600"
+                        _hover={{ bg: 'blue.700' }}
+                        flex={1}
+                      >
+                        再次挑战
+                      </Button>
+                      <Button
+                        onClick={() => router.push('/list')}
+                        variant="outline"
+                        borderColor="blue.300"
+                        color="blue.600"
+                        _hover={{ bg: 'blue.50' }}
+                        flex={1}
+                      >
+                        返回列表
+                      </Button>
+                    </HStack>
+                  </VStack>
+                ) : (
+                  // 正常输入区域
+                  <VStack gap={3}>
+                    <Textarea
+                      value={inputText}
+                      onChange={(e) => setInputText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault()
+                          handleSendMessage()
+                        }
+                      }}
+                      placeholder="输入您的回复或点击麦克风使用语音输入..."
+                      minH="80px"
+                      borderColor="blue.200"
+                      _focus={{ borderColor: 'blue.400', boxShadow: '0 0 0 1px #3182CE' }}
+                      bg="white"
+                      disabled={isLoading || isComplete}
+                    />
+                    <HStack gap={2} w="full">
+                      <Button
+                        onClick={isRecording ? handleStopRecording : handleStartRecording}
+                        variant="outline"
+                        borderColor="blue.300"
+                        color={isRecording ? "red.600" : "blue.600"}
+                        bg={isRecording ? "red.50" : "white"}
+                        _hover={{ bg: isRecording ? "red.100" : "blue.50" }}
+                        disabled={isLoading || isComplete}
+                      >
+                        <Icon as={isRecording ? FiMicOff : FiMic} w={4} h={4} mr={2} />
+                        {isRecording ? "停止录音" : "语音输入"}
+                      </Button>
+                      <Button
+                        onClick={handleSendMessage}
+                        colorScheme="blue"
+                        bg="blue.600"
+                        _hover={{ bg: 'blue.700' }}
+                        _disabled={{ bg: 'gray.300', cursor: 'not-allowed' }}
+                        disabled={!inputText.trim() || isLoading || isComplete}
+                        loading={isLoading}
+                        loadingText="发送中..."
+                        flex={1}
+                      >
+                        <Icon as={FiSend} w={4} h={4} mr={2} />
+                        发送 ({messages.filter(m => m.role === 'user').length}/3)
+                      </Button>
+                    </HStack>
+                    {messages.length > 0 && (
+                      <Text fontSize="xs" color="blue.600" textAlign="center">
+                        还需 {3 - messages.filter(m => m.role === 'user').length} 轮对话完成本次练习
+                      </Text>
+                    )}
+                  </VStack>
+                )}
               </Box>
             </Box>
           </Box>

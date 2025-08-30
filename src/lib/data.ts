@@ -1,4 +1,12 @@
-import { Case } from '@/types'
+import { Case, ChatMessage, ChatResult } from '@/types'
+
+interface ChatResponse {
+  success: boolean
+  message: ChatMessage
+  conversationHistory: ChatMessage[]
+  isComplete: boolean
+  result: ChatResult | null
+}
 
 export async function getCases(): Promise<Case[]> {
   try {
@@ -24,6 +32,36 @@ export async function getCase(id: string): Promise<Case | null> {
     return data.case
   } catch (error) {
     console.error('Error fetching case:', error)
+    return null
+  }
+}
+
+export async function sendChatMessage(
+  caseId: string, 
+  message: string, 
+  conversationHistory: ChatMessage[]
+): Promise<ChatResponse | null> {
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        caseId,
+        message,
+        conversationHistory
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to send chat message')
+    }
+
+    const data = await response.json()
+    return data
+  } catch (error) {
+    console.error('Error sending chat message:', error)
     return null
   }
 }

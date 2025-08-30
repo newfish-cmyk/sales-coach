@@ -24,3 +24,17 @@ export interface DetailPageProps {
   item: Case
   loading?: boolean
 }
+
+export interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+  timestamp: Date
+}
+
+export interface ChatResult {
+  stars: number
+  score: number
+  report: string
+  totalAttempts: number
+  bestScore: number
+}
