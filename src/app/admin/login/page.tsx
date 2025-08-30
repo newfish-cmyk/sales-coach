@@ -7,13 +7,13 @@ import {
   VStack,
   Heading,
   Text,
-  Button,
   Box,
   Input,
   Link,
   Flex,
   Field
 } from '@chakra-ui/react'
+import { LoadingButton } from '@/components/LoadingSystem'
 import NextLink from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import axios from 'axios'
@@ -174,17 +174,18 @@ export default function AdminLoginPage() {
                   )}
                 </Field.Root>
 
-                <Button
+                <LoadingButton
                   type="submit"
                   size="lg"
                   colorScheme="blue"
                   w="full"
-                  loading={isLoading}
+                  isLoading={isLoading}
+                  loadingText="登录中..."
                   py={6}
                   fontSize="lg"
                 >
                   登录
-                </Button>
+                </LoadingButton>
               </VStack>
             </Box>
 

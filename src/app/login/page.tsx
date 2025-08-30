@@ -7,7 +7,6 @@ import {
   VStack,
   Heading,
   Text,
-  Button,
   Box,
   Input,
   Link,
@@ -17,6 +16,7 @@ import {
 import NextLink from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { OverlayLoading } from '@/components/OverlayLoading'
+import { LoadingButton } from '@/components/LoadingSystem'
 export default function LoginPage() {
   const router = useRouter()
   const { login, user, loading: authLoading } = useAuth()
@@ -177,17 +177,18 @@ export default function LoginPage() {
                   )}
                 </Field.Root>
 
-                <Button
+                <LoadingButton
                   type="submit"
                   size="lg"
                   colorScheme="blue"
                   w="full"
-                  loading={isLoading}
+                  isLoading={isLoading}
+                  loadingText="登录中..."
                   py={6}
                   fontSize="lg"
                 >
                   登录
-                </Button>
+                </LoadingButton>
               </VStack>
             </Box>
 

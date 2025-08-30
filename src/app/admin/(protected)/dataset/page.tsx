@@ -14,6 +14,7 @@ import {
   Table,
   Alert
 } from '@chakra-ui/react'
+import { LoadingButton } from '@/components/LoadingSystem'
 
 interface UploadFile {
   name: string
@@ -190,15 +191,16 @@ export default function DatasetPage() {
                   >
                     清空列表
                   </Button>
-                  <Button
+                  <LoadingButton
                     size="sm"
                     colorScheme="blue"
                     onClick={handleUploadAll}
-                    loading={isUploading}
+                    isLoading={isUploading}
+                    loadingText="上传中..."
                     disabled={files.length === 0 || files.every(f => f.status === 'success')}
                   >
                     上传全部
-                  </Button>
+                  </LoadingButton>
                 </HStack>
               </HStack>
             )}

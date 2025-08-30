@@ -7,7 +7,6 @@ import {
   VStack,
   Heading,
   Text,
-  Button,
   Box,
   Input,
   Link,
@@ -17,6 +16,7 @@ import {
 import NextLink from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { OverlayLoading } from '@/components/OverlayLoading'
+import { LoadingButton } from '@/components/LoadingSystem'
 export default function RegisterPage() {
   const router = useRouter()
   const { register, user, loading: authLoading } = useAuth()
@@ -217,18 +217,19 @@ export default function RegisterPage() {
                   )}
                 </Field.Root>
 
-                <Button
+                <LoadingButton
                   type="submit"
                   size="lg"
                   colorScheme="blue"
                   w="full"
-                  loading={isLoading}
+                  isLoading={isLoading}
+                  loadingText="注册中..."
                   py={6}
                   fontSize="lg"
                   disabled={!!successMessage}
                 >
                   {successMessage ? '注册成功' : '创建账户'}
-                </Button>
+                </LoadingButton>
               </VStack>
             </Box>
 

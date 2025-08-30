@@ -19,11 +19,12 @@ import {
   Input,
   Textarea,
   Field,
-  NumberInput,
-  Spinner
+  NumberInput
 } from '@chakra-ui/react'
 import { HiPencil, HiTrash, HiArrowLeft } from 'react-icons/hi2'
 import axios from 'axios'
+import { OverlayLoading } from '@/components/OverlayLoading'
+import { LoadingButton } from '@/components/LoadingSystem'
 
 interface CaseData {
   id: string
@@ -256,14 +257,7 @@ export default function CasesManagePage() {
     }
   }
 
-  if (loading) {
-    return (
-      <Box minH="100vh" bg="gray.50" display="flex" alignItems="center" justifyContent="center">
-        <Spinner size="xl" color="blue.500" />
-      </Box>
-    )
-  }
-
+  // 所有 useMemo 必须在条件返回之前
   const renderCreateForm = useMemo(() => (
     <Box minH="100vh" bg="gray.50">
       <Container maxW="4xl" py={8}>
@@ -417,14 +411,15 @@ export default function CasesManagePage() {
                           基于客户信息生成个性化的销售对练剧本
                         </Text>
                       </Box>
-                      <Button
+                      <LoadingButton
                         colorScheme="green"
                         onClick={generateScript}
-                        loading={isGeneratingScript}
+                        isLoading={isGeneratingScript}
+                        loadingText="生成中..."
                         size="sm"
                       >
-                        {isGeneratingScript ? '生成中...' : '生成剧本'}
-                      </Button>
+                        生成剧本
+                      </LoadingButton>
                     </HStack>
                     
                     <Field.Root>
@@ -444,13 +439,14 @@ export default function CasesManagePage() {
                   <Button variant="outline" onClick={handleBack}>
                     取消
                   </Button>
-                  <Button
+                  <LoadingButton
                     colorScheme="blue"
                     onClick={handleSubmit}
-                    loading={isSubmitting}
+                    isLoading={isSubmitting}
+                    loadingText={editingCase ? '更新中...' : '创建中...'}
                   >
-                    {isSubmitting ? (editingCase ? '更新中...' : '创建中...') : (editingCase ? '更新案例' : '创建案例')}
-                  </Button>
+                    {editingCase ? '更新案例' : '创建案例'}
+                  </LoadingButton>
                 </HStack>
               </VStack>
             </Card.Body>
@@ -586,6 +582,15 @@ export default function CasesManagePage() {
       </Container>
     </Box>
   ), [cases, handleCreate, handleEdit, handleDelete])
+
+  if (loading) {
+    return (
+      <>
+        <OverlayLoading isVisible={true} />
+        <Box minH="100vh" bg="gray.50" />
+      </>
+    )
+  }
 
   return (
     <>

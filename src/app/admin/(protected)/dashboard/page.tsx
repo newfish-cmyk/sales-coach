@@ -12,6 +12,7 @@ import {
   Badge,
   Table,
 } from '@chakra-ui/react'
+import { OverlayLoading } from '@/components/OverlayLoading'
 import { 
   AtSignIcon, 
   StarIcon, 
@@ -74,9 +75,10 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <VStack align="center" justify="center" minH="400px">
-        <Text>加载中...</Text>
-      </VStack>
+      <>
+        <OverlayLoading isVisible={true} />
+        <Box minH="100vh" bg="gray.50" />
+      </>
     )
   }
 

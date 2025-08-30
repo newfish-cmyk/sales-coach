@@ -16,11 +16,12 @@ import {
   Badge,
   Flex,
   Grid,
-  Spinner,
   Center,
   Icon,
   Textarea,
+  Spinner
 } from '@chakra-ui/react'
+import { PageLoading, LoadingButton } from '@/components/LoadingSystem'
 import { 
   FiArrowLeft, 
   FiUser, 
@@ -156,16 +157,7 @@ export default function DetailPage() {
 
 
   if (loading) {
-    return (
-      <Box minH="100vh" bg="gray.50">
-        <Container maxW="container.xl" py={8}>
-          <VStack gap={4} justify="center" minH="50vh">
-            <Spinner size="xl" />
-            <Text>加载中...</Text>
-          </VStack>
-        </Container>
-      </Box>
-    )
+    return <PageLoading isVisible={true} />
   }
 
   if (!item || !customer) {
@@ -571,20 +563,19 @@ export default function DetailPage() {
                         <Icon as={isRecording ? FiMicOff : FiMic} w={4} h={4} mr={2} />
                         {isRecording ? "停止录音" : "语音输入"}
                       </Button>
-                      <Button
+                      <LoadingButton
                         onClick={onSendMessage}
                         colorScheme="blue"
                         bg="blue.600"
                         _hover={{ bg: 'blue.700' }}
-                        _disabled={{ bg: 'gray.300', cursor: 'not-allowed' }}
-                        disabled={!inputText.trim() || sendingMessage || isComplete}
-                        loading={sendingMessage}
+                        disabled={!inputText.trim() || isComplete}
+                        isLoading={sendingMessage}
                         loadingText="发送中..."
                         flex={1}
                       >
                         <Icon as={FiSend} w={4} h={4} mr={2} />
                         发送 ({messages.filter(m => m.role === 'user').length}/3)
-                      </Button>
+                      </LoadingButton>
                     </HStack>
                     {messages.length > 0 && (
                       <Text fontSize="xs" color="blue.600" textAlign="center">
