@@ -10,12 +10,13 @@ export interface IAttempts extends Document {
   _id: string
   userId: mongoose.Types.ObjectId
   caseId: mongoose.Types.ObjectId
-  stars: number
-  score: number
-  report: string
+  stars?: number
+  score?: number
+  report?: string
   conversationData: {
     messages: IMessage[]
   }
+  isComplete?: boolean
   createdAt: Date
 }
 
@@ -53,20 +54,25 @@ const AttemptsSchema: Schema = new Schema(
     },
     stars: {
       type: Number,
-      required: true,
+      required: false,
       min: [0, 'Stars cannot be negative'],
       max: [5, 'Stars cannot exceed 5'],
     },
     score: {
       type: Number,
-      required: true,
+      required: false,
       min: [0, 'Score cannot be negative'],
       max: [100, 'Score cannot exceed 100'],
     },
     report: {
       type: String,
-      required: [true, 'Report is required'],
+      required: false,
       trim: true,
+    },
+    isComplete: {
+      type: Boolean,
+      required: false,
+      default: false,
     },
     conversationData: {
       messages: [MessageSchema],
@@ -83,6 +89,7 @@ const AttemptsSchema: Schema = new Schema(
 
 // 创建索引优化查询
 AttemptsSchema.index({ userId: 1, caseId: 1 })
+AttemptsSchema.index({ userId: 1, caseId: 1, isComplete: 1 })
 AttemptsSchema.index({ createdAt: -1 })
 
 export default mongoose.models.Attempts || mongoose.model<IAttempts>('Attempts', AttemptsSchema)

@@ -6,6 +6,8 @@ import Progress from '@/models/Progress'
 import Attempts from '@/models/Attempts'
 import Case from '@/models/Case'
 import mongoose from 'mongoose'
+import axios from 'axios'
+import { nanoid } from 'nanoid'
 
 interface ChatMessage {
   role: 'user' | 'assistant'
@@ -30,58 +32,160 @@ async function chatHandler(request: NextRequest) {
   }
 
   // 验证关卡是否存在
-  const caseExists = await Case.findById(caseId)
-  if (!caseExists) {
+  const caseData = await Case.findById(caseId)
+  if (!caseData) {
     throw new Error('Case not found')
   }
 
-    // 添加用户消息到对话历史
-    const userMessage: ChatMessage = {
-      role: 'user',
-      content: message.trim(),
-      timestamp: new Date()
+  // 检查 FastGPT 配置
+  const fastgptApiUrl = process.env.FASTGPT_API_URL
+  const fastgptApiKey = process.env.FASTGPT_CHAT_API_KEY
+
+  if (!fastgptApiUrl || !fastgptApiKey) {
+    throw new Error('FastGPT API 配置缺失')
+  }
+
+  // 添加用户消息到对话历史
+  const userMessage: ChatMessage = {
+    role: 'user',
+    content: message.trim(),
+    timestamp: new Date()
+  }
+
+  const updatedHistory = [...conversationHistory, userMessage]
+
+  // 构建系统提示词，基于案例数据
+  const systemPrompt = `你现在要扮演一个名叫"${caseData.customerName}"的客户角色。
+
+客户信息：
+- 姓名：${caseData.customerName}  
+- 介绍：${caseData.intro}
+- 性格特征：${caseData.metaData.personality.join('、')}
+- 预算范围：${caseData.metaData.budget}
+- 决策级别：${caseData.metaData.decision_level}
+- 背景信息：${caseData.metaData.background}
+- 关键痛点：${caseData.metaData.points.join('、')}
+
+角色要求：
+1. 严格按照上述客户信息的性格特征和背景进行对话
+2. 展现出该客户的痛点和需求，但不要过于明显
+3. 根据性格特征调整沟通风格（如：谨慎的客户会多问问题，急躁的客户希望快速了解重点）
+4. 保持专业且真实的商务对话风格
+5. 适当提出符合角色设定的问题和疑虑
+6. 不要主动透露所有信息，让销售员通过提问来了解需求
+7. 当你认为销售对话已经充分，销售员展现了足够的销售技巧，可以自然地结束对话时，请在回复中包含特殊标记：[CONVERSATION_COMPLETE]
+
+请作为这个客户角色与销售员进行对话。如果对话达到自然的结束点，请添加完成标记。`
+
+  // 调用 FastGPT 获取 AI 回复
+  let assistantMessage: ChatMessage
+  let fastgptCompletion = false
+  
+  try {
+    // 准备发送给 FastGPT 的消息
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...updatedHistory.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }))
+    ]
+    const variables = {
+      script: caseData.script
     }
 
-    const updatedHistory = [...conversationHistory, userMessage]
+    // 调用 FastGPT API
+    const chatId = nanoid()
+    const fastgptResponse = await axios.post(`${fastgptApiUrl}/v1/chat/completions`, {
+      chatId,
+      stream: false,
+      detail: false,
+      messages,
+      variables
+    }, {
+      headers: {
+        'Authorization': `Bearer ${fastgptApiKey}`,
+        'Content-Type': 'application/json'
+      },
+      timeout: 300000
+    })
 
-    // 模拟AI回复（暂时返回用户输入的内容）
-    const assistantMessage: ChatMessage = {
+    const aiContent = fastgptResponse.data.choices?.[0]?.message?.content || 
+                     fastgptResponse.data.text || 
+                     '抱歉，我现在无法回复，请稍后再试。'
+
+    // 检查 FastGPT 是否返回了完成信号
+    fastgptCompletion = fastgptResponse.data.isComplete || 
+                       fastgptResponse.data.finished || 
+                       aiContent.includes('[CONVERSATION_COMPLETE]') ||
+                       false
+
+    // 从显示内容中移除完成标记
+    const displayContent = aiContent.replace(/\[CONVERSATION_COMPLETE\]/g, '').trim()
+
+    assistantMessage = {
       role: 'assistant',
-      content: `我收到了您的消息："${message.trim()}"，让我来回应一下...`,
+      content: displayContent,
       timestamp: new Date()
     }
+  } catch (error) {
+    console.error('FastGPT API Error:', error)
+    
+    // FastGPT 调用失败时的降级回复
+    assistantMessage = {
+      role: 'assistant',
+      content: `作为${caseData.customerName}，我现在有点忙，能否简单介绍一下你们的产品？`,
+      timestamp: new Date()
+    }
+  }
 
-    const finalHistory = [...updatedHistory, assistantMessage]
+  const finalHistory = [...updatedHistory, assistantMessage]
 
-    // 检查是否达到3轮对话（6条消息：3条用户+3条助手）
-    const isComplete = finalHistory.length >= 6
+  // 检查对话是否完成（由 FastGPT 返回的响应决定）
+  const isComplete = fastgptCompletion
 
-    let attemptData = null
-    let progressData = null
+  // 每次对话都保存到 attempts 表中（无论是否完成）
+  let attemptData = null
+  let progressData = null
 
+  // 查找或创建 attempt 记录
+  let attempt = await Attempts.findOne({
+    userId: user._id,
+    caseId: new mongoose.Types.ObjectId(caseId),
+    isComplete: { $ne: true } // 查找未完成的对话
+  }).sort({ createdAt: -1 })
+
+  if (attempt) {
+    // 更新现有的未完成对话
+    attempt.conversationData = { messages: finalHistory }
     if (isComplete) {
-      // 随机生成分数和星级
-      const score = Math.floor(Math.random() * 31) + 70 // 70-100分
-      const stars = Math.floor(score / 20) // 分数转星级
+      const score = Math.floor((Math.random() * 31) + 70)
+      attempt.stars = Math.floor(score / 20)
+      attempt.score = score
+      attempt.report = generateReport(score, finalHistory)
+      attempt.isComplete = true
+    }
+    await attempt.save()
+  } else {
+    // 创建新的对话记录（第一条消息）
+    const score = isComplete ? Math.floor((Math.random() * 31) + 70) : null
+    attempt = new Attempts({
+      userId: user._id,
+      caseId: new mongoose.Types.ObjectId(caseId),
+      stars: isComplete && score ? Math.floor(score / 20) : undefined,
+      score: score,
+      report: isComplete && score ? generateReport(score, finalHistory) : undefined,
+      conversationData: {
+        messages: finalHistory
+      },
+      isComplete: isComplete || false
+    })
+    await attempt.save()
+  }
+  
+  attemptData = attempt
 
-      // 生成评价报告
-      const report = generateReport(score, finalHistory)
-
-      // 保存本次尝试记录
-      const attempt = new Attempts({
-        userId: user._id,
-        caseId: new mongoose.Types.ObjectId(caseId),
-        stars,
-        score,
-        report,
-        conversationData: {
-          messages: finalHistory
-        }
-      })
-
-      await attempt.save()
-      attemptData = attempt
-
+  if (isComplete) {
       // 更新或创建进度记录
       const existingProgress = await Progress.findOne({
         userId: user._id,
@@ -93,9 +197,9 @@ async function chatHandler(request: NextRequest) {
         existingProgress.totalAttempts += 1
         existingProgress.lastAttemptAt = new Date()
         
-        if (score > existingProgress.bestScore) {
-          existingProgress.bestScore = score
-          existingProgress.bestStars = stars
+        if (attemptData.score > existingProgress.bestScore) {
+          existingProgress.bestScore = attemptData.score
+          existingProgress.bestStars = attemptData.stars
         }
 
         if (!existingProgress.firstCompletedAt) {
@@ -109,8 +213,8 @@ async function chatHandler(request: NextRequest) {
         const newProgress = new Progress({
           userId: user._id,
           caseId: new mongoose.Types.ObjectId(caseId),
-          bestStars: stars,
-          bestScore: score,
+          bestStars: attemptData.stars,
+          bestScore: attemptData.score,
           totalAttempts: 1,
           firstCompletedAt: new Date(),
           lastAttemptAt: new Date()
@@ -121,7 +225,7 @@ async function chatHandler(request: NextRequest) {
       }
     }
 
-  return {
+  const response = {
     message: assistantMessage,
     conversationHistory: finalHistory,
     isComplete,
@@ -133,6 +237,8 @@ async function chatHandler(request: NextRequest) {
       bestScore: progressData?.bestScore
     } : null
   }
+  
+  return response
 }
 
 export const POST = apiHandler(chatHandler)

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useParams } from 'next/navigation'
 import { useRequest } from 'ahooks'
@@ -59,24 +59,59 @@ export default function DetailPage() {
   const [isComplete, setIsComplete] = useState(false)
   const [chatResult, setChatResult] = useState<ChatResult | null>(null)
 
-  // 获取关卡详情
-  const { data: item, loading } = useRequest(
-    async () => {
-      const response = await fetch(`/api/cases/${params.id}`, {
-        credentials: 'include' // Include cookies for authentication
-      })
-      if (!response.ok) throw new Error('Failed to fetch case')
-      return response.json()
-    },
-    {
-      ready: !!params.id,
-      onError: (error) => {
-        console.error('Failed to load case:', error)
+  const [item, setItem] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!params.id) return
+      
+      try {
+        // 1. 先加载案例信息
+        const caseResponse = await fetch(`/api/cases/${params.id}`, { 
+          credentials: 'include' 
+        })
+        
+        if (caseResponse.ok) {
+          const caseResponse_data = await caseResponse.json()
+          // apiHandler 包装了响应，实际数据在 data 字段中  
+          const caseData = caseResponse_data.data || caseResponse_data
+          setItem(caseData)
+        }
+        
+        // 2. 检查是否有未完成的 attempt
+        const attemptResponse = await fetch(`/api/cases/${params.id}/current-attempt`, { 
+          credentials: 'include' 
+        })
+        
+        if (attemptResponse.ok) {
+          const attemptResponse_data = await attemptResponse.json()
+          // apiHandler 包装了响应，实际数据在 data 字段中
+          const attemptData = attemptResponse_data.data || attemptResponse_data
+          if (attemptData.hasAttempt) {
+            // 有未完成的对话，加载消息
+            setMessages(attemptData.messages || [])
+            setIsComplete(attemptData.isComplete || false)
+            if (attemptData.isComplete && attemptData.result) {
+              setChatResult(attemptData.result)
+            }
+          } else {
+            // 没有未完成的对话，页面保持空白
+            setMessages([])
+            setIsComplete(false)
+            setChatResult(null)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load data:', error)
+      } finally {
+        setLoading(false)
       }
     }
-  )
 
-  // 发送聊天消息
+    fetchData()
+  }, [])
+
   const { run: handleSendMessage, loading: sendingMessage } = useRequest(
     async (messageContent: string) => {
       const response = await fetch('/api/chat', {
@@ -84,18 +119,28 @@ export default function DetailPage() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include', // Include cookies for authentication
         body: JSON.stringify({
-          caseId: params.id as string,
+          caseId: params.id,
           message: messageContent,
           conversationHistory: messages
         })
       })
-      if (!response.ok) throw new Error('Failed to send message')
-      return response.json()
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('API Error:', errorText)
+        throw new Error('Failed to send message')
+      }
+      
+      const data = await response.json()
+      return data
     },
     {
       manual: true,
-      onSuccess: (data) => {
-        setMessages(data.conversationHistory)
+      onSuccess: (response) => {
+        // apiHandler 包装了响应，实际数据在 data 字段中
+        const data = response.data || response
+        // 直接使用 API 返回的对话历史，确保实时更新
+        setMessages(data.conversationHistory || [])
         if (data.isComplete) {
           setIsComplete(true)
           setChatResult(data.result)
@@ -126,11 +171,27 @@ export default function DetailPage() {
     handleSendMessage(messageContent)
   }
 
-  const handleRestart = () => {
-    setMessages([])
-    setIsComplete(false)
-    setChatResult(null)
-    setInputText('')
+  const handleRestart = async () => {
+    try {
+      // 放弃当前的 attempt
+      await fetch(`/api/cases/${params.id}/abandon-attempt`, {
+        method: 'POST',
+        credentials: 'include'
+      })
+      
+      // 重置页面状态
+      setMessages([])
+      setIsComplete(false)
+      setChatResult(null)
+      setInputText('')
+    } catch (error) {
+      console.error('Failed to abandon attempt:', error)
+      // 即使失败也要重置界面状态
+      setMessages([])
+      setIsComplete(false)
+      setChatResult(null)
+      setInputText('')
+    }
   }
 
   // 使用useMemo优化客户档案数据计算
@@ -382,24 +443,38 @@ export default function DetailPage() {
                 p={4}
                 flexShrink={0}
               >
-                <Heading size="md" display="flex" alignItems="center" color="blue.900">
-                  <Icon as={FiMessageCircle} w={5} h={5} mr={2} color="blue.600" />
-                  对话记录
-                </Heading>
+                <HStack justify="space-between" align="center">
+                  <Heading size="md" display="flex" alignItems="center" color="blue.900">
+                    <Icon as={FiMessageCircle} w={5} h={5} mr={2} color="blue.600" />
+                    对话记录
+                  </Heading>
+                  {messages && messages.length > 0 && !isComplete && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      colorScheme="blue"
+                      onClick={handleRestart}
+                      _hover={{ bg: 'blue.50' }}
+                    >
+                      重新开始
+                    </Button>
+                  )}
+                </HStack>
               </Box>
 
               {/* 对话内容 */}
               <Box flex={1} overflowY="auto" p={6}>
                 <VStack gap={4} align="stretch">
-                  {messages.length === 0 && !isComplete && (
+                  
+                  {(!messages || messages.length === 0) && !isComplete && (
                     <Box textAlign="center" py={8}>
                       <Text color="blue.600" fontSize="sm">
-                        开始与 {customer.name} 的销售对练吧！
+                        开始与 {customer?.name} 的销售对练吧！
                       </Text>
                     </Box>
                   )}
                   
-                  {messages.map((message, index) => (
+                  {messages && messages.map((message, index) => (
                     <Flex
                       key={index}
                       justify={message.role === 'user' ? 'flex-end' : 'flex-start'}
@@ -574,12 +649,12 @@ export default function DetailPage() {
                         flex={1}
                       >
                         <Icon as={FiSend} w={4} h={4} mr={2} />
-                        发送 ({messages.filter(m => m.role === 'user').length}/3)
+                        发送消息
                       </LoadingButton>
                     </HStack>
-                    {messages.length > 0 && (
+                    {messages && messages.length > 0 && (
                       <Text fontSize="xs" color="blue.600" textAlign="center">
-                        还需 {3 - messages.filter(m => m.role === 'user').length} 轮对话完成本次练习
+                        与 {customer?.name} 的销售对练进行中...
                       </Text>
                     )}
                   </VStack>

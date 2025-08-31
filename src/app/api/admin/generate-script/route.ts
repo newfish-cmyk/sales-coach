@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     }
 
     const fastgptApiUrl = process.env.FASTGPT_API_URL
-    const fastgptApiKey = process.env.FASTGPT_API_KEY
+    const fastgptApiKey = process.env.FASTGPT_SCRIPT_API_KEY
 
     if (!fastgptApiUrl || !fastgptApiKey) {
       return NextResponse.json(
