@@ -30,7 +30,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   }
 
   const navigationItems = [
-    // { href: '/admin/dashboard', label: '数据总览' },
+    { href: '/admin/dashboard', label: '数据总览' },
     { href: '/admin/dataset', label: '知识导入' },
     { href: '/admin/cases', label: '案例管理' },
   ]

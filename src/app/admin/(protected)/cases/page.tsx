@@ -311,16 +311,13 @@ export default function CasesManagePage() {
 
                   <Field.Root invalid={!!errors.orderIndex}>
                     <Field.Label>排序</Field.Label>
-                    <NumberInput.Root
+                    <NumberInput.Root                       
                       value={formData.orderIndex.toString()}
                       onValueChange={(details) => handleInputChange('orderIndex', parseInt(details.value) || 1)}
-                      min={1}
+                      width="200px"
                     >
-                      <NumberInput.ValueText />
-                      <NumberInput.Control>
-                        <NumberInput.IncrementTrigger />
-                        <NumberInput.DecrementTrigger />
-                      </NumberInput.Control>
+                      <NumberInput.Control />
+                      <NumberInput.Input />
                     </NumberInput.Root>
                     {errors.orderIndex && (
                       <Field.ErrorText>{errors.orderIndex}</Field.ErrorText>
