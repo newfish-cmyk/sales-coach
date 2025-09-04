@@ -22,6 +22,7 @@ import {
   Spinner
 } from '@chakra-ui/react'
 import { PageLoading, LoadingButton } from '@/components/LoadingSystem'
+import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 import { 
   FiArrowLeft, 
   FiUser, 
@@ -152,15 +153,36 @@ export default function DetailPage() {
     }
   )
 
-  // 对话处理函数
+  // 语音识别：将识别文本拼接到输入框末尾
+  const { isSupported, isListening, start, stop } = useSpeechRecognition({
+    lang: 'zh-CN',
+    continuous: false,
+    interimResults: true,
+    onFinal: (text: string) => {
+      if (!text) return
+      setInputText((prev) => {
+        if (!prev) return text
+        const needsSpace = !/\s$/.test(prev)
+        return `${prev}${needsSpace ? ' ' : ''}${text}`
+      })
+    }
+  })
+
+  useEffect(() => {
+    setIsRecording(isListening)
+  }, [isListening])
+
+  // 对话处理函数（按钮触发开始/停止）
   const handleStartRecording = () => {
-    setIsRecording(true)
-    console.log("开始录音")
+    if (!isSupported) {
+      console.warn('当前浏览器不支持语音识别')
+      return
+    }
+    start()
   }
 
   const handleStopRecording = () => {
-    setIsRecording(false)
-    console.log("停止录音")
+    stop()
   }
 
   const onSendMessage = () => {
@@ -630,13 +652,13 @@ export default function DetailPage() {
                         onClick={isRecording ? handleStopRecording : handleStartRecording}
                         variant="outline"
                         borderColor="blue.300"
-                        color={isRecording ? "red.600" : "blue.600"}
-                        bg={isRecording ? "red.50" : "white"}
+                        color={!isSupported ? 'gray.400' : isRecording ? 'red.600' : 'blue.600'}
+                        bg={!isSupported ? 'gray.50' : isRecording ? 'red.50' : 'white'}
                         _hover={{ bg: isRecording ? "red.100" : "blue.50" }}
-                        disabled={sendingMessage || isComplete}
+                        disabled={!isSupported || sendingMessage || isComplete}
                       >
                         <Icon as={isRecording ? FiMicOff : FiMic} w={4} h={4} mr={2} />
-                        {isRecording ? "停止录音" : "语音输入"}
+                        {!isSupported ? '不支持语音' : isRecording ? '停止录音' : '语音输入'}
                       </Button>
                       <LoadingButton
                         onClick={onSendMessage}
